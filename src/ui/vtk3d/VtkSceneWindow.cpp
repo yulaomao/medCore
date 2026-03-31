@@ -1,8 +1,6 @@
 #include "VtkSceneWindow.h"
 #include <QSet>
 #include "../../logic/scene/nodes/NodeBase.h"
-
-static constexpr int CAMERA_RESET_DELAY_MS = 3000;
 #include "../../logic/scene/nodes/PointNode.h"
 #include "../../logic/scene/nodes/LineNode.h"
 #include "../../logic/scene/nodes/ModelNode.h"
@@ -16,6 +14,8 @@ static constexpr int CAMERA_RESET_DELAY_MS = 3000;
 #include <vtkProperty.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkCallbackCommand.h>
+
+static constexpr int CAMERA_RESET_DELAY_MS = 3000;
 
 static void interactionCallback(vtkObject* /*caller*/, unsigned long /*eid*/,
                                  void* clientData, void* /*callData*/)

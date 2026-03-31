@@ -51,8 +51,6 @@ public:
         : DefaultSoftwareInitializer(parent) {}
 };
 
-#include "SoftwareInitializerFactory.moc"
-
 QSharedPointer<BaseSoftwareInitializer> SoftwareInitializerFactory::create(const QString& softwareType) {
     if (softwareType == "params-only")
         return QSharedPointer<ParamsOnlySoftwareInitializer>::create();
@@ -61,3 +59,5 @@ QSharedPointer<BaseSoftwareInitializer> SoftwareInitializerFactory::create(const
     // default
     return QSharedPointer<DefaultSoftwareInitializer>::create();
 }
+
+#include "SoftwareInitializerFactory.moc"

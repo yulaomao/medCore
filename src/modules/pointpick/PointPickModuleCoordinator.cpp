@@ -66,7 +66,6 @@ void PointPickModuleCoordinator::onClearPointsClicked() {
 
 void PointPickModuleCoordinator::onModuleNotification(const LogicNotification& notification) {
     if (notification.eventType != EventType::SceneUpdated) return;
-    if (!notification.targetModules.contains(moduleName())) return;
 
     int count = notification.payload["count"].toInt();
     pointList_->clear();

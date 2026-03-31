@@ -53,7 +53,6 @@ void ParamsModuleCoordinator::activate() {
 
 void ParamsModuleCoordinator::onModuleNotification(const LogicNotification& notification) {
     if (notification.eventType != EventType::StateChanged) return;
-    if (!notification.targetModules.contains(moduleName())) return;
 
     QJsonObject params = notification.payload["params"].toObject();
     for (auto it = params.begin(); it != params.end(); ++it) {

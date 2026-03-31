@@ -79,7 +79,6 @@ void PlanningModuleCoordinator::onAddLineClicked() {
 
 void PlanningModuleCoordinator::onModuleNotification(const LogicNotification& notification) {
     if (notification.eventType != EventType::SceneUpdated) return;
-    if (!notification.targetModules.contains(moduleName())) return;
 
     if (notification.payload.contains("modelId")) {
         QString fp = notification.payload["filePath"].toString();

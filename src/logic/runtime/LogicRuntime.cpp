@@ -82,5 +82,4 @@ void LogicRuntime::onStateSample(const QString& channel, const QJsonObject& data
 
 void LogicRuntime::onHandlerNotification(const LogicNotification& notification) {
     emit notificationReceived(notification);
-    emit notificationBroadcast(notification);
 }

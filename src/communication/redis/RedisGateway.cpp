@@ -68,11 +68,29 @@ void RedisGateway::onSocketError(QAbstractSocket::SocketError /*error*/) {
 }
 
 void RedisGateway::onSocketReadyRead() {
-    // Minimal RESP parser for subscribe messages
-    while (socket_->canReadLine()) {
-        QString line = QString::fromUtf8(socket_->readLine()).trimmed();
-        // A subscribe push looks like: *3\r\n$7\r\nmessage\r\n$<len>\r\n<channel>\r\n$<len>\r\n<data>
-        Q_UNUSED(line);
+    // Minimal RESP parser for subscribe push messages.
+    // Format: *3\r\n$7\r\nmessage\r\n$<len>\r\n<channel>\r\n$<len>\r\n<data>\r\n
+    while (socket_->bytesAvailable() > 0) {
+        // Read until we have a full *3 array header
+        if (!socket_->canReadLine()) break;
+        QString header = QString::fromUtf8(socket_->readLine()).trimmed();
+        if (!header.startsWith('*')) continue;
+
+        int parts = header.mid(1).toInt();
+        QStringList tokens;
+        bool ok = true;
+        for (int i = 0; i < parts && ok; ++i) {
+            if (!socket_->canReadLine()) { ok = false; break; }
+            socket_->readLine(); // skip $<len> line
+            if (!socket_->canReadLine()) { ok = false; break; }
+            tokens << QString::fromUtf8(socket_->readLine()).trimmed();
+        }
+        if (!ok) break;
+
+        // Expect: ["message", channel, data]
+        if (tokens.size() == 3 && tokens[0] == "message") {
+            emit messageReceived(tokens[1], tokens[2]);
+        }
     }
 }
 

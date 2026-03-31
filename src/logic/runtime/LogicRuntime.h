@@ -27,7 +27,7 @@ public:
     void stop();
 
 signals:
-    void notificationBroadcast(const LogicNotification& notification);
+    // notificationReceived is inherited from ILogicGateway
 
 public slots:
     void processAction(const UiAction& action);
