@@ -55,6 +55,7 @@ set(SOURCES
     # Contracts (header-only structs, no .cpp needed beyond metatype registration)
 
     # Logic gateway (header-only interface)
+    src/logic/gateway/ILogicGateway.h
 
     # Scene nodes
     src/logic/scene/nodes/NodeBase.cpp
@@ -133,3 +134,36 @@ target_link_libraries(medCore PRIVATE
     ${MEDCORE_QT_MODULES}
     ${MEDCORE_VTK_MODULES}
 )
+
+if (WIN32 AND QT_VERSION_MAJOR EQUAL 6)
+    get_target_property(MEDCORE_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+    if (MEDCORE_QMAKE_EXECUTABLE)
+        get_filename_component(MEDCORE_QT_BIN_DIR "${MEDCORE_QMAKE_EXECUTABLE}" DIRECTORY)
+        find_program(MEDCORE_WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${MEDCORE_QT_BIN_DIR}")
+        if (MEDCORE_WINDEPLOYQT_EXECUTABLE)
+            add_custom_command(TARGET medCore POST_BUILD
+                COMMAND "${MEDCORE_WINDEPLOYQT_EXECUTABLE}"
+                    "$<$<CONFIG:Debug>:--debug>$<$<NOT:$<CONFIG:Debug>>:--release>"
+                    --no-translations
+                    --no-system-d3d-compiler
+                    --no-opengl-sw
+                    "$<TARGET_FILE:medCore>"
+                COMMENT "Deploying Qt runtime dependencies via windeployqt"
+                VERBATIM
+            )
+        else()
+            message(WARNING "windeployqt not found; medCore may fail to run without Qt runtime DLLs.")
+        endif()
+    else()
+        message(WARNING "Qt6::qmake location unavailable; skipping automatic Qt runtime deployment.")
+    endif()
+endif()
+
+if (WIN32)
+    add_custom_command(TARGET medCore POST_BUILD
+        COMMAND powershell -NoProfile -ExecutionPolicy Bypass -Command
+            "if (Test-Path '${CMAKE_CURRENT_BINARY_DIR}/third_party/vtk/bin/$<CONFIG>') { Get-ChildItem -Path '${CMAKE_CURRENT_BINARY_DIR}/third_party/vtk/bin/$<CONFIG>' -Filter '*.dll' | Copy-Item -Destination '$<TARGET_FILE_DIR:medCore>' -Force }"
+        COMMENT "Deploying VTK runtime dependencies"
+        VERBATIM
+    )
+endif()

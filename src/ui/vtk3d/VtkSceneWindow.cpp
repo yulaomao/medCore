@@ -32,7 +32,7 @@ VtkSceneWindow::VtkSceneWindow(const QString& windowId, QWidget* parent)
     , windowId_(windowId)
 {
     auto renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    SetRenderWindow(renWin);
+    setRenderWindow(renWin);
 
     sharedCamera_ = vtkSmartPointer<vtkCamera>::New();
 
@@ -125,7 +125,7 @@ void VtkSceneWindow::updateNodes(const QVector<NodeBase*>& nodes) {
         }
     }
 
-    GetRenderWindow()->Render();
+    renderWindow()->Render();
 }
 
 vtkSmartPointer<vtkActor> VtkSceneWindow::createActorForNode(NodeBase* node) {
@@ -187,7 +187,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
 
 void VtkSceneWindow::resetCamera() {
     modelRenderer_->ResetCamera();
-    GetRenderWindow()->Render();
+    renderWindow()->Render();
 }
 
 void VtkSceneWindow::onInteraction() {
