@@ -1,5 +1,12 @@
 #include "ModelNode.h"
 
+namespace {
+QString normalizedRenderMode(const QString& mode) {
+    if (mode == "wireframe" || mode == "points") return mode;
+    return "surface";
+}
+}
+
 ModelNode::ModelNode(QObject* parent)
     : NodeBase("ModelNode", parent)
 {}
@@ -26,7 +33,7 @@ void ModelNode::setWireframe(bool wf) {
 
 QString ModelNode::renderMode() const { return renderMode_; }
 void ModelNode::setRenderMode(const QString& mode) {
-    renderMode_ = mode;
+    renderMode_ = normalizedRenderMode(mode);
     wireframe_ = (renderMode_ == "wireframe");
     markDirty();
 }
@@ -49,5 +56,6 @@ void ModelNode::fromJson(const QJsonObject& obj) {
     opacity_   = obj["opacity"].toDouble(1.0);
     visibilityFlag_ = obj["visibilityFlag"].toBool(true);
     wireframe_ = obj["wireframe"].toBool(false);
-    renderMode_ = obj["renderMode"].toString(wireframe_ ? "wireframe" : "surface");
+    renderMode_ = normalizedRenderMode(
+        obj["renderMode"].toString(wireframe_ ? "wireframe" : "surface"));
 }

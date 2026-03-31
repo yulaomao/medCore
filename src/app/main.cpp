@@ -29,6 +29,7 @@
 #include "../modules/navigation/NavigationModuleHandler.h"
 #include "../modules/navigation/NavigationModuleCoordinator.h"
 #include <QStackedWidget>
+#include <QPointer>
 
 int main(int argc, char* argv[]) {
     // Required for VTK + Qt OpenGL
@@ -124,10 +125,12 @@ int main(int argc, char* argv[]) {
     auto* mainWindow = new MainWindow(workspaceShell);
     appCoordinator->connectShellSignals(mainWindow);
 
+    QPointer<CommunicationHub> communicationHubGuard(communicationHub.data());
+    QPointer<LogicRuntime> logicRuntimeGuard(logicRuntime.data());
     QObject::connect(&app, &QCoreApplication::aboutToQuit,
-                     [communicationHub = communicationHub, logicRuntime = logicRuntime]() {
-        communicationHub->stop();
-        logicRuntime->stop();
+                     [communicationHubGuard, logicRuntimeGuard]() {
+        if (communicationHubGuard) communicationHubGuard->stop();
+        if (logicRuntimeGuard) logicRuntimeGuard->stop();
     });
 
     // 12. Activate initial module

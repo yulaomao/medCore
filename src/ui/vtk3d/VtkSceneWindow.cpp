@@ -16,6 +16,9 @@
 #include <vtkCallbackCommand.h>
 
 static constexpr int CAMERA_RESET_DELAY_MS = 3000;
+static constexpr const char* RENDER_MODE_SURFACE = "surface";
+static constexpr const char* RENDER_MODE_WIREFRAME = "wireframe";
+static constexpr const char* RENDER_MODE_POINTS = "points";
 
 static void interactionCallback(vtkObject* /*caller*/, unsigned long /*eid*/,
                                  void* clientData, void* /*callData*/)
@@ -174,9 +177,9 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetOpacity(mdl->getOpacity());
         actor->SetVisibility(mdl->isVisible());
         actor->GetProperty()->SetRepresentationToWireframe();
-        if (mdl->renderMode() == "points") {
+        if (mdl->renderMode() == RENDER_MODE_POINTS) {
             actor->GetProperty()->SetRepresentationToPoints();
-        } else if (mdl->renderMode() != "wireframe") {
+        } else if (mdl->renderMode() != RENDER_MODE_WIREFRAME) {
             actor->GetProperty()->SetRepresentationToSurface();
         }
     }

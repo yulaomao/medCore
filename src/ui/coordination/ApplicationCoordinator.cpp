@@ -3,6 +3,13 @@
 #include "../../shell/WorkspaceShell.h"
 #include <QDebug>
 
+namespace {
+QString notificationModuleName(const LogicNotification& notification) {
+    return notification.payload["currentModule"].toString(
+        notification.payload["module"].toString());
+}
+}
+
 ApplicationCoordinator::ApplicationCoordinator(ILogicGateway* gateway,
                                                  PageManager* pageManager,
                                                  GlobalUiManager* uiManager,
@@ -67,8 +74,7 @@ void ApplicationCoordinator::onNotification(const LogicNotification& notificatio
                 coordinators_[mod]->onModuleNotification(notification);
         }
     } else if (notification.targetScope == TargetScope::Shell) {
-        const QString nextModule = notification.payload["currentModule"].toString(
-            notification.payload["module"].toString());
+        const QString nextModule = notificationModuleName(notification);
         if ((notification.eventType == EventType::ModuleChanged ||
              notification.eventType == EventType::WorkflowChanged ||
              notification.eventType == EventType::PageChanged) &&

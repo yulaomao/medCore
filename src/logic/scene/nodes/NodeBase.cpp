@@ -1,6 +1,12 @@
 #include "NodeBase.h"
 #include <QJsonArray>
 
+namespace {
+int normalizeDisplayLayer(int layer) {
+    return qBound(1, layer, 3);
+}
+}
+
 NodeBase::NodeBase(const QString& nodeType, QObject* parent)
     : QObject(parent)
     , nodeId_(QUuid::createUuid())
@@ -65,7 +71,7 @@ DisplayTarget NodeBase::defaultDisplayTarget() const { return defaultDisplayTarg
 
 void NodeBase::setDefaultDisplayTarget(const DisplayTarget& target) {
     defaultDisplayTarget_ = target;
-    defaultDisplayTarget_.layer = qBound(1, defaultDisplayTarget_.layer, 3);
+    defaultDisplayTarget_.layer = normalizeDisplayLayer(defaultDisplayTarget_.layer);
     markDirty();
 }
 
@@ -83,7 +89,7 @@ void NodeBase::setWindowDisplayTarget(const QString& windowId, const DisplayTarg
 
 void NodeBase::setWindowDisplayOverride(const QString& windowId, const DisplayTarget& target) {
     DisplayTarget normalized = target;
-    normalized.layer = qBound(1, normalized.layer, 3);
+    normalized.layer = normalizeDisplayLayer(normalized.layer);
     windowDisplayOverrides_[windowId] = normalized;
     markDirty();
 }
@@ -168,7 +174,7 @@ void NodeBase::fromJson(const QJsonObject& obj) {
     if (obj.contains("defaultDisplayTarget")) {
         auto dt = obj["defaultDisplayTarget"].toObject();
         defaultDisplayTarget_.visible = dt["visible"].toBool(true);
-        defaultDisplayTarget_.layer = qBound(1, dt["layer"].toInt(1), 3);
+        defaultDisplayTarget_.layer = normalizeDisplayLayer(dt["layer"].toInt(1));
     }
     if (obj.contains("windowDisplayOverrides")) {
         windowDisplayOverrides_.clear();
@@ -177,7 +183,7 @@ void NodeBase::fromJson(const QJsonObject& obj) {
             const auto item = it.value().toObject();
             windowDisplayOverrides_[it.key()] = DisplayTarget{
                 item["visible"].toBool(true),
-                qBound(1, item["layer"].toInt(1), 3)
+                normalizeDisplayLayer(item["layer"].toInt(1))
             };
         }
     }
