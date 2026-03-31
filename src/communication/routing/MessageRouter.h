@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QJsonObject>
+#include <QPointer>
 #include <QVector>
 #include <QRegularExpression>
 
@@ -19,7 +20,7 @@ signals:
 private:
     struct Route {
         QRegularExpression pattern;
-        QObject* receiver;
+        QPointer<QObject> receiver;
         QString slot;
     };
     QVector<Route> routes_;

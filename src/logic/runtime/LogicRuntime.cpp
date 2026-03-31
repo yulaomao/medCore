@@ -9,10 +9,9 @@ LogicRuntime::LogicRuntime(ModuleLogicRegistry* registry,
     , registry_(registry)
     , workflow_(workflow)
     , sceneGraph_(sceneGraph)
-    , workerThread_(new QThread(this))
 {
     // Connect all handler notifications
-    for (auto& handler : registry_->allHandlers()) {
+    for (const auto& handler : registry_->allHandlers()) {
         connect(handler.data(), &ModuleLogicHandler::logicNotification,
                 this, &LogicRuntime::onHandlerNotification,
                 Qt::QueuedConnection);
@@ -24,17 +23,13 @@ LogicRuntime::~LogicRuntime() {
 }
 
 void LogicRuntime::start() {
-    if (!workerThread_->isRunning()) {
-        moveToThread(workerThread_);
-        workerThread_->start();
+    if (connectionState_ != "Connected") {
         connectionState_ = "Connected";
     }
 }
 
 void LogicRuntime::stop() {
-    if (workerThread_->isRunning()) {
-        workerThread_->quit();
-        workerThread_->wait(3000);
+    if (connectionState_ != "Disconnected") {
         connectionState_ = "Disconnected";
     }
 }
@@ -75,7 +70,7 @@ void LogicRuntime::processAction(const UiAction& action) {
 }
 
 void LogicRuntime::onStateSample(const QString& channel, const QJsonObject& data) {
-    for (auto& handler : registry_->allHandlers()) {
+    for (const auto& handler : registry_->allHandlers()) {
         handler->onStateSample(channel, data);
     }
 }

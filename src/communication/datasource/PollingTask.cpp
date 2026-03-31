@@ -16,6 +16,6 @@ void PollingTask::run() {
     sample.channel        = channel_;
     sample.data           = data;
     sample.timestampMs    = QDateTime::currentMSecsSinceEpoch();
-    sample.sequenceNumber = ++sequenceNumber_;
+    sample.sequenceNumber = sequenceNumber_.fetch_add(1, std::memory_order_relaxed) + 1;
     emit sampleReady(sample);
 }

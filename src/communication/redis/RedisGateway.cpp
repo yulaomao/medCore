@@ -8,7 +8,7 @@ RedisGateway::RedisGateway(QObject* parent)
     connect(socket_, &QTcpSocket::connected, this, &RedisGateway::onSocketConnected);
     connect(socket_, &QTcpSocket::disconnected, this, &RedisGateway::onSocketDisconnected);
     connect(socket_, &QTcpSocket::readyRead, this, &RedisGateway::onSocketReadyRead);
-    connect(socket_, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error),
+    connect(socket_, &QAbstractSocket::errorOccurred,
             this, &RedisGateway::onSocketError);
 }
 

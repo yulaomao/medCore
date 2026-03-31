@@ -7,6 +7,7 @@ PollingSource::PollingSource(PollingTask* task, QObject* parent)
     , timer_(new QTimer(this))
 {
     task_->setParent(this);
+    timer_->setTimerType(Qt::PreciseTimer);
     connect(timer_, &QTimer::timeout, this, &PollingSource::onTimerTick);
     connect(task_, &PollingTask::sampleReady, this, &PollingSource::onSampleReady,
             Qt::QueuedConnection);
@@ -15,7 +16,9 @@ PollingSource::PollingSource(PollingTask* task, QObject* parent)
 PollingSource::~PollingSource() = default;
 
 void PollingSource::start() {
-    timer_->start(task_->intervalMs());
+    const int intervalMs = task_->intervalMs();
+    if (intervalMs <= 0) return;
+    timer_->start(intervalMs);
 }
 
 void PollingSource::stop() {
@@ -23,9 +26,16 @@ void PollingSource::stop() {
 }
 
 void PollingSource::onTimerTick() {
+    if (taskRunning_.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+
     QPointer<PollingTask> guard(task_);
-    QThreadPool::globalInstance()->start([guard]() {
-        if (guard) guard->run();
+    QThreadPool::globalInstance()->start([guard, this]() {
+        if (guard) {
+            guard->run();
+        }
+        taskRunning_.store(false, std::memory_order_release);
     });
 }
 

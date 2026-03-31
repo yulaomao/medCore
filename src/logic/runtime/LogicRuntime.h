@@ -1,6 +1,5 @@
 #pragma once
 #include <QObject>
-#include <QThread>
 #include <QSharedPointer>
 #include "../../logic/gateway/ILogicGateway.h"
 #include "../../logic/registry/ModuleLogicRegistry.h"
@@ -40,6 +39,5 @@ private:
     ModuleLogicRegistry* registry_;
     WorkflowStateMachine* workflow_;
     SceneGraph* sceneGraph_;
-    QThread* workerThread_;
     QString connectionState_{"Disconnected"};
 };

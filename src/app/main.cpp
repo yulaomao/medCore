@@ -48,11 +48,11 @@ int main(int argc, char* argv[]) {
     QString softwareType = resolver.resolve("medcore.config");
 
     // 2. Build core infrastructure
-    auto* sceneGraph = new SceneGraph();
+    auto* sceneGraph = new SceneGraph(&app);
 
     QStringList workflow = {"params", "pointpick", "planning", "navigation"};
-    auto* workflowFSM = new WorkflowStateMachine(workflow, "params");
-    auto* registry    = new ModuleLogicRegistry();
+    auto* workflowFSM = new WorkflowStateMachine(workflow, "params", &app);
+    auto* registry    = new ModuleLogicRegistry(&app);
 
     // 3. Register module logic handlers
     auto paramsHandler    = QSharedPointer<ParamsModuleHandler>::create(sceneGraph);
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     logicRuntime->start();
 
     // 5. CommunicationHub
-    auto* messageRouter  = new MessageRouter();
+    auto* messageRouter  = new MessageRouter(&app);
     auto communicationHub = QSharedPointer<CommunicationHub>::create();
     communicationHub->setMessageRouter(messageRouter);
     communicationHub->setLogicRuntime(logicRuntime.data());
@@ -89,8 +89,8 @@ int main(int argc, char* argv[]) {
 
     // 8. UI managers
     auto* stackedWidget = new QStackedWidget();
-    auto* pageManager   = new PageManager(stackedWidget);
-    auto* uiManager     = new GlobalUiManager();
+    auto* pageManager   = new PageManager(stackedWidget, &app);
+    auto* uiManager     = new GlobalUiManager(&app);
 
     uiManager->register3dWindow("pointpick-window", pointPickWindow);
     uiManager->register3dWindow("planning-window",  planningWindow);
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
     // 9. ApplicationCoordinator
     auto* appCoordinator = new ApplicationCoordinator(logicRuntime.data(),
-                                                        pageManager, uiManager);
+                                                        pageManager, uiManager, &app);
     appCoordinator->registerModuleCoordinator(paramsCoord);
     appCoordinator->registerModuleCoordinator(pointPickCoord);
     appCoordinator->registerModuleCoordinator(planningCoord);
@@ -123,6 +123,11 @@ int main(int argc, char* argv[]) {
 
     auto* mainWindow = new MainWindow(workspaceShell);
     appCoordinator->connectShellSignals(mainWindow);
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, [&]() {
+        communicationHub->stop();
+        logicRuntime->stop();
+    });
 
     // 12. Activate initial module
     appCoordinator->activateModule(workflowFSM->currentModule());
