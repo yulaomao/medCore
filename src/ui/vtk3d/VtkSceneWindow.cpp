@@ -1,6 +1,8 @@
 #include "VtkSceneWindow.h"
 #include <QSet>
 #include "../../logic/scene/nodes/NodeBase.h"
+
+static constexpr int CAMERA_RESET_DELAY_MS = 3000;
 #include "../../logic/scene/nodes/PointNode.h"
 #include "../../logic/scene/nodes/LineNode.h"
 #include "../../logic/scene/nodes/ModelNode.h"
@@ -65,7 +67,7 @@ VtkSceneWindow::VtkSceneWindow(const QString& windowId, QWidget* parent)
     renWin->GetInteractor()->AddObserver(vtkCommand::LeftButtonPressEvent, cb);
 
     cameraResetTimer_.setSingleShot(true);
-    cameraResetTimer_.setInterval(3000);
+    cameraResetTimer_.setInterval(CAMERA_RESET_DELAY_MS);
     connect(&cameraResetTimer_, &QTimer::timeout, this, &VtkSceneWindow::resetCamera);
 }
 

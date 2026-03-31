@@ -1,4 +1,5 @@
 #include "PollingSource.h"
+#include <QPointer>
 
 PollingSource::PollingSource(PollingTask* task, QObject* parent)
     : SourceBase(task->channel(), parent)
@@ -22,9 +23,9 @@ void PollingSource::stop() {
 }
 
 void PollingSource::onTimerTick() {
-    // Run poll in thread pool; task emits sampleReady when done
-    QThreadPool::globalInstance()->start([this]() {
-        task_->run();
+    QPointer<PollingTask> guard(task_);
+    QThreadPool::globalInstance()->start([guard]() {
+        if (guard) guard->run();
     });
 }
 

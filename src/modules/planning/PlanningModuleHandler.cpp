@@ -31,7 +31,7 @@ void PlanningModuleHandler::loadModel(const QJsonObject& params, const QUuid& so
     auto node = QSharedPointer<ModelNode>::create();
     node->setFilePath(params["filePath"].toString());
     if (params.contains("color")) node->setColor(QColor(params["color"].toString()));
-    if (params.contains("opacity")) node->setOpacity(params["opacity"].toDouble(1.0));
+    node->setOpacity(params["opacity"].toDouble(1.0));
 
     const QString id = node->nodeId().toString();
     managedModels_[id] = node;
