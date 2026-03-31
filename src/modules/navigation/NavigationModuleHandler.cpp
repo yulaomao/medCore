@@ -1,10 +1,13 @@
+// 文件说明：实现导航模块逻辑，负责跟踪位姿节点更新与同步。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "NavigationModuleHandler.h"
 
 NavigationModuleHandler::NavigationModuleHandler(SceneGraph* sceneGraph, QObject* parent)
     : ModuleLogicHandler(parent)
     , sceneGraph_(sceneGraph)
 {
-    // Create a persistent transform node for the tracked pose
+    // 为被跟踪位姿创建一个持久化的变换节点
     poseNode_ = QSharedPointer<TransformNode>::create();
     poseNodeId_ = poseNode_->nodeId().toString();
     sceneGraph_->addNode(poseNode_);

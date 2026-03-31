@@ -1,3 +1,6 @@
+// 文件说明：实现工作区外壳界面，组织工具栏、页面区域及右侧/底部附属区域。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "WorkspaceShell.h"
 
 WorkspaceShell::WorkspaceShell(QWidget* parent)

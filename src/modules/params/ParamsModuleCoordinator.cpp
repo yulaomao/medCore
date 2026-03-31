@@ -1,3 +1,6 @@
+// 文件说明：实现参数模块界面协调器，负责表单展示与用户输入转发。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "ParamsModuleCoordinator.h"
 #include <QWidget>
 #include <QVBoxLayout>

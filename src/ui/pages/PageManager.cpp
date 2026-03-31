@@ -1,3 +1,6 @@
+// 文件说明：实现页面管理器，维护页面注册、切换与查询。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PageManager.h"
 #include <QDebug>
 

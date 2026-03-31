@@ -1,3 +1,6 @@
+// 文件说明：实现主窗口容器，承载工作区、全局覆盖层和浮动工具区域。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "MainWindow.h"
 #include "WorkspaceShell.h"
 #include <QMenuBar>
@@ -16,7 +19,7 @@ MainWindow::MainWindow(WorkspaceShell* workspaceShell, QWidget* parent)
     setWindowTitle("medCore");
     resize(1280, 800);
 
-    // Design section 5: MainWindow contains rootStack, globalOverlayLayer, globalToolHost
+    // 设计第 5 节要求：MainWindow 包含 rootStack、globalOverlayLayer 与 globalToolHost
     rootStack_->addWidget(workspaceShell_);
     setCentralWidget(rootStack_);
 
@@ -46,13 +49,13 @@ void MainWindow::setupMenuBar() {
 }
 
 void MainWindow::setupOverlayLayers() {
-    // globalOverlayLayer sits on top of the rootStack for notifications, masks, confirm dialogs
+    // globalOverlayLayer 位于 rootStack 上层，用于承载通知、遮罩和确认对话框
     globalOverlayLayer_->setParent(this);
     globalOverlayLayer_->setAttribute(Qt::WA_TranslucentBackground, true);
     globalOverlayLayer_->hide();
     globalOverlayLayer_->raise();
 
-    // globalToolHost hosts floating tool windows (3D tools, etc.)
+    // globalToolHost 用于承载浮动工具窗口，例如三维工具面板
     globalToolHost_->setParent(this);
     globalToolHost_->setAttribute(Qt::WA_TranslucentBackground, true);
     globalToolHost_->hide();

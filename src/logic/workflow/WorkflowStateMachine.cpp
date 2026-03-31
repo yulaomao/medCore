@@ -1,3 +1,6 @@
+// 文件说明：实现工作流状态机，控制模块切换顺序和可进入模块集合。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "WorkflowStateMachine.h"
 
 WorkflowStateMachine::WorkflowStateMachine(const QStringList& workflowSequence,

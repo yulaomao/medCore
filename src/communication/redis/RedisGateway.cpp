@@ -1,3 +1,6 @@
+// 文件说明：实现基于 Redis 发布订阅的通信网关与 RESP 消息解析逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "RedisGateway.h"
 #include <QDebug>
 
@@ -23,7 +26,7 @@ void RedisGateway::disconnectFromRedis() {
 
 void RedisGateway::publish(const QString& channel, const QString& message) {
     if (state_ != State::Connected) return;
-    // RESP protocol: PUBLISH channel message
+    // 按 RESP 协议拼装 PUBLISH channel message 命令
     QString cmd = QString("*3\r\n$7\r\nPUBLISH\r\n$%1\r\n%2\r\n$%3\r\n%4\r\n")
         .arg(channel.size()).arg(channel).arg(message.size()).arg(message);
     socket_->write(cmd.toUtf8());
@@ -51,7 +54,7 @@ RedisGateway::State RedisGateway::state() const { return state_; }
 
 void RedisGateway::onSocketConnected() {
     setState(State::Connected);
-    // Re-subscribe to tracked channels
+    // 重新订阅当前已跟踪的通道
     for (const auto& ch : subscribedChannels_) {
         QString cmd = QString("*2\r\n$9\r\nSUBSCRIBE\r\n$%1\r\n%2\r\n").arg(ch.size()).arg(ch);
         socket_->write(cmd.toUtf8());
@@ -68,10 +71,10 @@ void RedisGateway::onSocketError(QAbstractSocket::SocketError /*error*/) {
 }
 
 void RedisGateway::onSocketReadyRead() {
-    // Minimal RESP parser for subscribe push messages.
-    // Format: *3\r\n$7\r\nmessage\r\n$<len>\r\n<channel>\r\n$<len>\r\n<data>\r\n
+    // 以最小实现解析订阅模式下 Redis 推送的 RESP 消息。
+    // 格式：*3\r\n$7\r\nmessage\r\n$<len>\r\n<channel>\r\n$<len>\r\n<data>\r\n
     while (socket_->bytesAvailable() > 0) {
-        // Read until we have a full *3 array header
+        // 持续读取，直到拿到完整的 *3 数组头
         if (!socket_->canReadLine()) break;
         QString header = QString::fromUtf8(socket_->readLine()).trimmed();
         if (!header.startsWith('*')) continue;
@@ -81,13 +84,13 @@ void RedisGateway::onSocketReadyRead() {
         bool ok = true;
         for (int i = 0; i < parts && ok; ++i) {
             if (!socket_->canReadLine()) { ok = false; break; }
-            socket_->readLine(); // skip $<len> line
+            socket_->readLine(); // 跳过 $<len> 这一行
             if (!socket_->canReadLine()) { ok = false; break; }
             tokens << QString::fromUtf8(socket_->readLine()).trimmed();
         }
         if (!ok) break;
 
-        // Expect: ["message", channel, data]
+        // 期望得到的数组结构为 ["message", channel, data]
         if (tokens.size() == 3 && tokens[0] == "message") {
             emit messageReceived(tokens[1], tokens[2]);
         }
