@@ -1,3 +1,6 @@
+// 文件说明：实现模型节点的网格元数据、渲染属性和序列化逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "ModelNode.h"
 #include <QJsonArray>
 #include <limits>
@@ -12,11 +15,11 @@ QString normalizedRenderMode(const QString& mode) {
 ModelNode::ModelNode(QObject* parent)
     : NodeBase("ModelNode", parent)
 {
-    // Design: ModelNode default layer = 1 (base model layer)
+    // 设计约定：ModelNode 默认位于第 1 层，作为基础模型层
     defaultDisplayTarget_ = DisplayTarget{true, 1};
 }
 
-// --- PolyData / mesh ---
+// --- PolyData / 网格数据 ---
 
 void ModelNode::setPolyData(const QByteArray& data) {
     polyDataPayload_ = data;
@@ -50,12 +53,12 @@ QVector<double> ModelNode::getBoundingBox() const {
     return cachedBounds_;
 }
 
-// --- File path ---
+// --- 文件路径 ---
 
 QString ModelNode::filePath() const { return filePath_; }
 void ModelNode::setFilePath(const QString& path) { filePath_ = path; markDirty(); }
 
-// --- Visualization ---
+// --- 可视化属性 ---
 
 QColor ModelNode::color() const { return colorValue_; }
 void ModelNode::setColor(const QColor& color) { colorValue_ = color; markDirty(); }
@@ -83,7 +86,7 @@ void ModelNode::setRenderMode(const QString& mode) {
 }
 QString ModelNode::getRenderMode() const { return renderMode(); }
 
-// --- Model metadata ---
+// --- 模型元数据 ---
 
 QString ModelNode::modelRole() const { return modelRole_; }
 void ModelNode::setModelRole(const QString& role) { modelRole_ = role; markDirty(); }
@@ -93,7 +96,7 @@ void ModelNode::setParentTransformId(const QString& id) { parentTransformId_ = i
 QString ModelNode::getParentTransform() const { return parentTransformId(); }
 void ModelNode::setParentTransform(const QString& id) { setParentTransformId(id); }
 
-// --- Edge display ---
+// --- 边缘显示 ---
 
 bool ModelNode::isShowEdges() const { return showEdgesFlag_; }
 void ModelNode::setShowEdges(bool show) { showEdgesFlag_ = show; markDirty(); }
@@ -104,12 +107,12 @@ void ModelNode::setEdgeColor(const QColor& color) { edgeColorRGBA_ = color; mark
 double ModelNode::getEdgeWidth() const { return edgeWidthValue_; }
 void ModelNode::setEdgeWidth(double width) { edgeWidthValue_ = width; markDirty(); }
 
-// --- Backface culling ---
+// --- 背面剔除 ---
 
 bool ModelNode::isBackfaceCulling() const { return backfaceCullingFlag_; }
 void ModelNode::setBackfaceCulling(bool cull) { backfaceCullingFlag_ = cull; markDirty(); }
 
-// --- Scalar color ---
+// --- 标量着色 ---
 
 bool ModelNode::isUseScalarColor() const { return useScalarColorFlag_; }
 void ModelNode::setUseScalarColor(bool use) { useScalarColorFlag_ = use; markDirty(); }
@@ -117,7 +120,7 @@ void ModelNode::setUseScalarColor(bool use) { useScalarColorFlag_ = use; markDir
 QString ModelNode::getScalarColorMap() const { return scalarColorMapName_; }
 void ModelNode::setScalarColorMap(const QString& mapName) { scalarColorMapName_ = mapName; markDirty(); }
 
-// --- Bounds ---
+// --- 包围盒 ---
 
 void ModelNode::updateCachedBounds() {
     if (vertices_.isEmpty()) {
@@ -135,7 +138,7 @@ void ModelNode::updateCachedBounds() {
     cachedBounds_ = {xmin, xmax, ymin, ymax, zmin, zmax};
 }
 
-// --- Serialization ---
+// --- 序列化 ---
 
 QJsonObject ModelNode::toJson() const {
     QJsonObject obj = NodeBase::toJson();

@@ -1,3 +1,6 @@
+// 文件说明：实现线程安全的场景图容器，用于集中管理节点增删改查。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "SceneGraph.h"
 
 SceneGraph::SceneGraph(QObject* parent) : QObject(parent) {}

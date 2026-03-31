@@ -1,3 +1,6 @@
+// 文件说明：实现规划模块界面协调器，负责模型列表、规划线列表与操作入口。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PlanningModuleCoordinator.h"
 #include <QWidget>
 #include <QVBoxLayout>
@@ -27,7 +30,7 @@ void PlanningModuleCoordinator::buildUi() {
 
     auto* splitter = new QSplitter(Qt::Horizontal);
 
-    // Left panel: model + line lists
+    // 左侧面板：模型列表与规划线列表
     auto* leftPanel  = new QWidget();
     auto* leftLayout = new QVBoxLayout(leftPanel);
 

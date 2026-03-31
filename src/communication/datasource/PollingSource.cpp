@@ -1,3 +1,6 @@
+// 文件说明：实现轮询式数据源，按任务列表周期采集并上报状态样本。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PollingSource.h"
 #include <QPointer>
 

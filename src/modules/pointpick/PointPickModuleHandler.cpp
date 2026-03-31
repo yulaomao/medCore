@@ -1,3 +1,6 @@
+// 文件说明：实现点采集模块逻辑，负责点对象的创建、删除与同步。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PointPickModuleHandler.h"
 #include <QJsonArray>
 

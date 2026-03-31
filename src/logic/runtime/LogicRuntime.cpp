@@ -1,3 +1,6 @@
+// 文件说明：实现逻辑运行时，负责连接模块处理器、工作流与界面网关。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "LogicRuntime.h"
 #include <QMetaObject>
 
@@ -10,7 +13,7 @@ LogicRuntime::LogicRuntime(ModuleLogicRegistry* registry,
     , workflow_(workflow)
     , sceneGraph_(sceneGraph)
 {
-    // Connect all handler notifications
+    // 连接所有模块处理器的通知信号
     for (const auto& handler : registry_->allHandlers()) {
         connect(handler.data(), &ModuleLogicHandler::logicNotification,
                 this, &LogicRuntime::onHandlerNotification,

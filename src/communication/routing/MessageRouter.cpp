@@ -1,3 +1,6 @@
+// 文件说明：实现消息路由器，按通道模式分发消息并校验消息包结构。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "MessageRouter.h"
 #include <QMetaObject>
 #include <QUuid>
@@ -9,7 +12,7 @@ MessageRouter::MessageRouter(QObject* parent) : QObject(parent) {}
 void MessageRouter::routeMessage(const QString& channel, const QJsonObject& message) {
     cleanupStaleRoutes();
 
-    // Validate envelope if present (design section 19.3)
+    // 如果消息包含包络字段，则按设计 19.3 进行校验
     if (message.contains("msgId")) {
         QString validationError;
         if (!validateEnvelope(message, &validationError)) {
@@ -20,7 +23,7 @@ void MessageRouter::routeMessage(const QString& channel, const QJsonObject& mess
     bool routed = false;
     for (const auto& route : routes_) {
         if (route.receiver && route.pattern.match(channel).hasMatch()) {
-            // Strip leading slot specifier digits (SLOT() macro adds "1" prefix)
+            // 去掉槽函数签名前面的标记数字，SLOT() 宏会附加前缀 "1"
             QString slotName = route.slot;
             if (!slotName.isEmpty() && slotName[0].isDigit())
                 slotName.remove(0, 1);
@@ -38,7 +41,7 @@ void MessageRouter::registerRoute(const QString& channelPattern, QObject* receiv
     if (!receiver || !slot) return;
 
     Route r;
-    // Convert glob-style pattern to regex: * -> .*
+    // 将 glob 风格通道模式转换为正则表达式：* 对应 .*
     QString regexStr = QRegularExpression::escape(channelPattern);
     regexStr.replace("\\*", ".*");
     r.pattern  = QRegularExpression("^" + regexStr + "$");
@@ -59,7 +62,7 @@ void MessageRouter::unregisterRoutes(QObject* receiver) {
 }
 
 bool MessageRouter::validateEnvelope(const QJsonObject& envelope, QString* errorOut) {
-    // Design section 19.3: msgId required and globally unique, version required
+    // 设计 19.3 要求：msgId 必填且全局唯一，version 也必须存在
     if (!envelope.contains("msgId") || envelope["msgId"].toString().isEmpty()) {
         if (errorOut) *errorOut = "Missing or empty msgId";
         return false;

@@ -1,10 +1,13 @@
+// 文件说明：实现变换节点的矩阵运算、坐标轴显示与序列化逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "TransformNode.h"
 #include <QJsonArray>
 
 TransformNode::TransformNode(QObject* parent)
     : NodeBase("TransformNode", parent)
 {
-    // Design: axes visualization defaults to layer 3
+    // 设计约定：坐标轴可视化默认位于第 3 层
     defaultDisplayTarget_ = DisplayTarget{true, 3};
     rebuildMatrixToParent();
 }
@@ -64,7 +67,7 @@ QMatrix4x4 TransformNode::getInverseMatrix() const {
     return matrixToParent_.inverted();
 }
 
-// --- Transform operations ---
+// --- 变换运算 ---
 
 void TransformNode::multiplyBy(const QMatrix4x4& other) {
     matrixToParent_ = matrixToParent_ * other;
@@ -90,7 +93,7 @@ QVector3D TransformNode::transformVector(const QVector3D& vector) const {
     return matrixToParent_.mapVector(vector);
 }
 
-// --- Parent transform ---
+// --- 父变换关系 ---
 
 QString TransformNode::parentTransformId() const {
     return parentTransformId_;
@@ -109,7 +112,7 @@ void TransformNode::setParentTransform(const QString& parentId) {
     setParentTransformId(parentId);
 }
 
-// --- Transform metadata ---
+// --- 变换元数据 ---
 
 QString TransformNode::transformKind() const {
     return transformKind_;
@@ -126,7 +129,7 @@ void TransformNode::setSourceSpaceName(const QString& name) { sourceSpaceName_ =
 QString TransformNode::targetSpaceName() const { return targetSpaceName_; }
 void TransformNode::setTargetSpaceName(const QString& name) { targetSpaceName_ = name; markDirty(); }
 
-// --- Axes visualization ---
+// --- 坐标轴可视化 ---
 
 bool TransformNode::isShowAxes() const { return showAxesFlag_; }
 void TransformNode::setShowAxes(bool show) { showAxesFlag_ = show; markDirty(); }
@@ -143,7 +146,7 @@ void TransformNode::setAxesColorY(const QColor& color) { axesColorY_ = color; ma
 QColor TransformNode::getAxesColorZ() const { return axesColorZ_; }
 void TransformNode::setAxesColorZ(const QColor& color) { axesColorZ_ = color; markDirty(); }
 
-// --- Internal ---
+// --- 内部辅助逻辑 ---
 
 void TransformNode::rebuildMatrixToParent() {
     QMatrix4x4 m;
@@ -155,7 +158,7 @@ void TransformNode::rebuildMatrixToParent() {
     matrixToParent_ = m;
 }
 
-// --- Serialization ---
+// --- 序列化 ---
 
 static QJsonObject encodeVec3(const QVector3D& v) {
     QJsonObject o; o["x"] = v.x(); o["y"] = v.y(); o["z"] = v.z(); return o;

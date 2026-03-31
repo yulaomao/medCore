@@ -1,3 +1,6 @@
+// 文件说明：实现点节点的数据管理、显示属性控制以及序列化逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PointNode.h"
 #include <QJsonObject>
 #include <QJsonArray>
@@ -6,11 +9,11 @@
 PointNode::PointNode(QObject* parent)
     : NodeBase("PointNode", parent)
 {
-    // Design: PointNode default layer = 3 to avoid occlusion by base models
+    // 设计约定：PointNode 默认位于第 3 层，以避免被基础模型遮挡
     defaultDisplayTarget_ = DisplayTarget{true, 3};
 }
 
-// --- Multi-point container ---
+// --- 多点容器能力 ---
 
 void PointNode::addPoint(const PointItem& item) {
     PointItem pt = item;
@@ -61,7 +64,7 @@ PointItem PointNode::getPointById(const QString& pointId) const {
     return {};
 }
 
-// --- Per-point property setters ---
+// --- 单点属性设置 ---
 
 void PointNode::setPointPosition(const QString& pointId, const QVector3D& pos) {
     const int idx = indexOfPointId(pointId);
@@ -108,7 +111,7 @@ double PointNode::getPointSize(const QString& pointId) const {
     return idx >= 0 ? controlPoints_.at(idx).sizeValue : defaultPointSize_;
 }
 
-// --- Node-level properties ---
+// --- 节点级属性 ---
 
 QString PointNode::pointLabelFormat() const { return pointLabelFormat_; }
 void PointNode::setPointLabelFormat(const QString& format) { pointLabelFormat_ = format; markDirty(); }
@@ -133,7 +136,7 @@ void PointNode::setDefaultPointSize(double size) { defaultPointSize_ = size; mar
 bool PointNode::isShowPointLabel() const { return showPointLabelFlag_; }
 void PointNode::setShowPointLabel(bool show) { showPointLabelFlag_ = show; markDirty(); }
 
-// --- Visualization ---
+// --- 可视化属性 ---
 
 bool PointNode::isVisible() const { return visibilityFlag_; }
 void PointNode::setVisibility(bool visible) { visibilityFlag_ = visible; markDirty(); }
@@ -145,7 +148,7 @@ QColor PointNode::getColor() const { return color(); }
 QString PointNode::renderMode() const { return renderMode_; }
 void PointNode::setRenderMode(const QString& mode) { renderMode_ = mode; markDirty(); }
 
-// --- Convenience: first-point accessors ---
+// --- 便捷接口：首个点的访问器 ---
 
 static PointItem createDefaultPointItem(const QColor& defaultColor, double defaultSize) {
     PointItem item;
@@ -188,7 +191,7 @@ void PointNode::setLabel(const QString& label) {
 double PointNode::radius() const { return defaultPointSize_; }
 void PointNode::setRadius(double radius) { setDefaultPointSize(radius); }
 
-// --- Serialization ---
+// --- 序列化 ---
 
 QJsonObject PointNode::toJson() const {
     QJsonObject obj = NodeBase::toJson();
@@ -242,7 +245,7 @@ void PointNode::fromJson(const QJsonObject& obj) {
             controlPoints_.append(item);
         }
     } else if (obj.contains("position")) {
-        // Backward compat: single-point format
+        // 向后兼容：旧版单点格式
         PointItem item;
         item.pointId = QUuid::createUuid().toString();
         auto pos = obj["position"].toObject();

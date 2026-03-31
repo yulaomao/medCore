@@ -1,3 +1,6 @@
+// 文件说明：实现线节点的折线数据、显示参数和序列化逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "LineNode.h"
 #include <QJsonArray>
 #include <QtMath>
@@ -5,11 +8,11 @@
 LineNode::LineNode(QObject* parent)
     : NodeBase("LineNode", parent)
 {
-    // Design: LineNode default layer = 3
+    // 设计约定：LineNode 默认位于第 3 层
     defaultDisplayTarget_ = DisplayTarget{true, 3};
 }
 
-// --- Polyline methods ---
+// --- 折线数据操作 ---
 
 void LineNode::setPolyline(const QVector<QVector3D>& points) {
     polylinePoints_ = points;
@@ -46,12 +49,12 @@ QVector3D LineNode::getVertex(int index) const {
     return {};
 }
 
-// --- Closed ---
+// --- 闭合状态 ---
 
 bool LineNode::isClosed() const { return closedFlag_; }
 void LineNode::setClosed(bool closed) { closedFlag_ = closed; recalculateLength(); markDirty(); }
 
-// --- Length ---
+// --- 长度计算 ---
 
 void LineNode::recalculateLength() {
     cachedLength_ = 0.0;
@@ -65,19 +68,19 @@ void LineNode::recalculateLength() {
 
 double LineNode::getLength() const { return cachedLength_; }
 
-// --- Line role ---
+// --- 线条角色 ---
 
 QString LineNode::lineRole() const { return lineRole_; }
 void LineNode::setLineRole(const QString& role) { lineRole_ = role; markDirty(); }
 
-// --- Parent transform ---
+// --- 父变换关系 ---
 
 QString LineNode::parentTransformId() const { return parentTransformId_; }
 void LineNode::setParentTransformId(const QString& id) { parentTransformId_ = id; markDirty(); }
 QString LineNode::getParentTransform() const { return parentTransformId(); }
 void LineNode::setParentTransform(const QString& id) { setParentTransformId(id); }
 
-// --- Visualization ---
+// --- 可视化属性 ---
 
 QColor LineNode::color() const { return color_; }
 void LineNode::setColor(const QColor& color) { color_ = color; markDirty(); }
@@ -100,7 +103,7 @@ QString LineNode::getRenderMode() const { return renderMode(); }
 bool LineNode::isDashed() const { return dashedFlag_; }
 void LineNode::setDashed(bool dashed) { dashedFlag_ = dashed; markDirty(); }
 
-// --- Convenience: two-point accessors ---
+// --- 便捷接口：两点式访问器 ---
 
 QVector3D LineNode::startPoint() const {
     return polylinePoints_.isEmpty() ? QVector3D() : polylinePoints_.first();
@@ -134,7 +137,7 @@ void LineNode::setEndPoint(const QVector3D& pt) {
     markDirty();
 }
 
-// --- Serialization ---
+// --- 序列化 ---
 
 static QJsonObject encodeVec3L(const QVector3D& v) {
     QJsonObject o; o["x"] = v.x(); o["y"] = v.y(); o["z"] = v.z(); return o;
@@ -168,7 +171,7 @@ void LineNode::fromJson(const QJsonObject& obj) {
         for (const auto& val : obj["polylinePoints"].toArray())
             polylinePoints_.append(decodeVec3L(val.toObject()));
     } else {
-        // Backward compat: startPoint/endPoint format
+        // 向后兼容：旧版 startPoint/endPoint 格式
         if (obj.contains("startPoint"))
             polylinePoints_.append(decodeVec3L(obj["startPoint"].toObject()));
         if (obj.contains("endPoint"))
