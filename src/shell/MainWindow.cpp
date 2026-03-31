@@ -48,13 +48,13 @@ void MainWindow::setupMenuBar() {
 void MainWindow::setupOverlayLayers() {
     // globalOverlayLayer sits on top of the rootStack for notifications, masks, confirm dialogs
     globalOverlayLayer_->setParent(this);
-    globalOverlayLayer_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     globalOverlayLayer_->setAttribute(Qt::WA_TranslucentBackground, true);
+    globalOverlayLayer_->hide();
     globalOverlayLayer_->raise();
 
     // globalToolHost hosts floating tool windows (3D tools, etc.)
     globalToolHost_->setParent(this);
-    globalToolHost_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     globalToolHost_->setAttribute(Qt::WA_TranslucentBackground, true);
+    globalToolHost_->hide();
     globalToolHost_->raise();
 }

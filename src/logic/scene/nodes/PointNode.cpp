@@ -147,17 +147,22 @@ void PointNode::setRenderMode(const QString& mode) { renderMode_ = mode; markDir
 
 // --- Convenience: first-point accessors ---
 
+static PointItem createDefaultPointItem(const QColor& defaultColor, double defaultSize) {
+    PointItem item;
+    item.pointId = QUuid::createUuid().toString();
+    item.colorRGBA = defaultColor;
+    item.sizeValue = defaultSize;
+    return item;
+}
+
 QVector3D PointNode::position() const {
     return controlPoints_.isEmpty() ? QVector3D() : controlPoints_.first().position;
 }
 
 void PointNode::setPosition(const QVector3D& pos) {
     if (controlPoints_.isEmpty()) {
-        PointItem item;
-        item.pointId = QUuid::createUuid().toString();
+        auto item = createDefaultPointItem(defaultPointColor_, defaultPointSize_);
         item.position = pos;
-        item.colorRGBA = defaultPointColor_;
-        item.sizeValue = defaultPointSize_;
         controlPoints_.append(item);
     } else {
         controlPoints_[0].position = pos;
@@ -171,11 +176,8 @@ QString PointNode::label() const {
 
 void PointNode::setLabel(const QString& label) {
     if (controlPoints_.isEmpty()) {
-        PointItem item;
-        item.pointId = QUuid::createUuid().toString();
+        auto item = createDefaultPointItem(defaultPointColor_, defaultPointSize_);
         item.label = label;
-        item.colorRGBA = defaultPointColor_;
-        item.sizeValue = defaultPointSize_;
         controlPoints_.append(item);
     } else {
         controlPoints_[0].label = label;
