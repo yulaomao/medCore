@@ -124,7 +124,8 @@ int main(int argc, char* argv[]) {
     auto* mainWindow = new MainWindow(workspaceShell);
     appCoordinator->connectShellSignals(mainWindow);
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, [communicationHub, logicRuntime]() {
+    QObject::connect(&app, &QCoreApplication::aboutToQuit,
+                     [communicationHub = communicationHub, logicRuntime = logicRuntime]() {
         communicationHub->stop();
         logicRuntime->stop();
     });
