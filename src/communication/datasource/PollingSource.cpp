@@ -26,19 +26,17 @@ void PollingSource::stop() {
 }
 
 void PollingSource::onTimerTick() {
-    if (taskRunning_.exchange(true, std::memory_order_acq_rel)) {
+    if (taskRunning_->exchange(true, std::memory_order_acq_rel)) {
         return;
     }
 
     QPointer<PollingTask> guard(task_);
-    QPointer<PollingSource> sourceGuard(this);
-    QThreadPool::globalInstance()->start([guard, sourceGuard]() {
+    const auto taskRunning = taskRunning_;
+    QThreadPool::globalInstance()->start([guard, taskRunning]() {
         if (guard) {
             guard->run();
         }
-        if (sourceGuard) {
-            sourceGuard->taskRunning_.store(false, std::memory_order_release);
-        }
+        taskRunning->store(false, std::memory_order_release);
     });
 }
 

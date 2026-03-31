@@ -5,11 +5,6 @@
 MessageRouter::MessageRouter(QObject* parent) : QObject(parent) {}
 
 void MessageRouter::routeMessage(const QString& channel, const QJsonObject& message) {
-    routes_.erase(
-        std::remove_if(routes_.begin(), routes_.end(),
-                       [](const Route& route) { return route.receiver.isNull(); }),
-        routes_.end());
-
     bool routed = false;
     for (const auto& route : routes_) {
         if (route.receiver && route.pattern.match(channel).hasMatch()) {
@@ -39,8 +34,8 @@ void MessageRouter::registerRoute(const QString& channelPattern, QObject* receiv
     r.slot     = QString::fromUtf8(slot);
     routes_.append(r);
 
-    connect(receiver, &QObject::destroyed, this, [this, receiver]() {
-        unregisterRoutes(receiver);
+    connect(receiver, &QObject::destroyed, this, [this]() {
+        unregisterRoutes(sender());
     });
 }
 
