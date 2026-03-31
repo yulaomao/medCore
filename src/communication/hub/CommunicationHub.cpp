@@ -1,3 +1,6 @@
+// 文件说明：实现通信枢纽，连接数据源、消息路由器与逻辑运行时。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "CommunicationHub.h"
 #include "../../logic/runtime/LogicRuntime.h"
 #include <QMetaObject>
@@ -58,7 +61,7 @@ void CommunicationHub::onSampleReady(const StateSample& sample) {
 void CommunicationHub::onSourceError(const QString& channelName, const QString& errorMessage) {
     emit dataSourceError(channelName, errorMessage);
 
-    // Forward data source errors to LogicRuntime as a notification-level error
+    // 将数据源错误转发给 LogicRuntime，统一作为通知级错误处理
     if (logicRuntime_) {
         QJsonObject errorPayload;
         errorPayload["channel"] = channelName;

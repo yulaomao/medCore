@@ -1,3 +1,6 @@
+// 文件说明：实现全局界面管理器，统一管理三维窗口与全局提示。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "GlobalUiManager.h"
 #include "../vtk3d/VtkSceneWindow.h"
 #include <QMessageBox>

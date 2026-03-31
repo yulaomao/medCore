@@ -1,3 +1,6 @@
+// 文件说明：实现订阅式数据源的启动、停止与采样推送逻辑。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "SubscriptionSource.h"
 #include <QDateTime>
 

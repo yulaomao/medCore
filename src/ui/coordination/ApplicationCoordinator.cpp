@@ -1,3 +1,6 @@
+// 文件说明：实现应用级协调器，负责模块激活、页面切换和附属区域挂载。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "ApplicationCoordinator.h"
 #include "../../shell/MainWindow.h"
 #include "../../shell/WorkspaceShell.h"
@@ -31,7 +34,7 @@ void ApplicationCoordinator::registerModuleCoordinator(QSharedPointer<ModuleCoor
     coordinator->setGateway(gateway_);
     coordinators_[name] = coordinator;
 
-    // Register main page with page manager
+    // 将模块主页注册到页面管理器
     QWidget* page = coordinator->mainPage();
     if (page) pageManager_->registerPage(name, page);
 }
@@ -96,7 +99,7 @@ void ApplicationCoordinator::onNotification(const LogicNotification& notificatio
         if (notification.eventType == EventType::ConnectionStateChanged)
             onConnectionStateChanged(notification.payload["state"].toString());
 
-        // Handle Shell-scoped errors: display to user via GlobalUiManager
+        // 处理 Shell 范围内的错误，并通过 GlobalUiManager 展示给用户
         if (notification.level == NotificationLevel::Error ||
             notification.level == NotificationLevel::Critical) {
             if (uiManager_) {

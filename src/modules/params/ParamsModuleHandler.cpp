@@ -1,3 +1,6 @@
+// 文件说明：实现参数模块的逻辑处理，负责参数同步与更新。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "ParamsModuleHandler.h"
 #include <QDebug>
 
@@ -12,7 +15,7 @@ void ParamsModuleHandler::onAction(const UiAction& action) {
     if (action.actionType != ActionType::UserInput) return;
     if (action.module != moduleName()) return;
 
-    // Merge incoming payload into current params
+    // 将收到的参数负载合并到当前参数对象中
     for (auto it = action.payload.begin(); it != action.payload.end(); ++it)
         currentParams_[it.key()] = it.value();
 

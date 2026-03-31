@@ -1,3 +1,6 @@
+// 文件说明：实现 VTK 三维场景窗口，负责节点渲染、分层显示与相机复位。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "VtkSceneWindow.h"
 #include <QSet>
 #include "../../logic/scene/nodes/NodeBase.h"
@@ -73,7 +76,7 @@ VtkSceneWindow::VtkSceneWindow(const QString& windowId, QWidget* parent)
     cameraResetTimer_.setInterval(CAMERA_RESET_DELAY_MS);
     connect(&cameraResetTimer_, &QTimer::timeout, this, &VtkSceneWindow::resetCamera);
 
-    // Apply default camera parameters
+    // 应用默认相机参数
     applyCameraParameters(initialCameraParams_);
 }
 
@@ -103,7 +106,7 @@ void VtkSceneWindow::updateNodes(const QVector<NodeBase*>& nodes) {
             actorCache_[id] = actor;
         }
 
-        // Map guide layers 1/2/3 to VTK render layers model/overlay/top.
+        // 将引导层 1/2/3 映射到 VTK 的 model/overlay/top 三个渲染层
         vtkRenderer* target = modelRenderer_;
         if (dt.layer == 2) target = overlayRenderer_;
         else if (dt.layer == 3) target = topRenderer_;
@@ -116,7 +119,7 @@ void VtkSceneWindow::updateNodes(const QVector<NodeBase*>& nodes) {
         }
     }
 
-    // Remove stale actors
+    // 清理已经失效的演员对象
     for (auto it = actorCache_.begin(); it != actorCache_.end(); ) {
         if (!activeIds.contains(it.key())) {
             modelRenderer_->RemoveActor(it.value());
@@ -141,7 +144,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
     if (!actor || !node) return;
 
     if (auto* pt = qobject_cast<PointNode*>(node)) {
-        // Use first point for simple rendering (multi-point rendering can be extended)
+        // 简化渲染时仅使用首个点，后续可扩展为真正的多点渲染
         auto sphere = vtkSmartPointer<vtkSphereSource>::New();
         sphere->SetCenter(pt->position().x(), pt->position().y(), pt->position().z());
         sphere->SetRadius(pt->radius());
@@ -156,7 +159,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetOpacity(pt->getOpacity());
         actor->SetVisibility(pt->isVisible());
     } else if (auto* ln = qobject_cast<LineNode*>(node)) {
-        // Handle polyline: use first and last vertex for simple two-point rendering
+        // 处理折线时先使用首尾顶点做简化的两点渲染
         auto line = vtkSmartPointer<vtkLineSource>::New();
         line->SetPoint1(ln->startPoint().x(), ln->startPoint().y(), ln->startPoint().z());
         line->SetPoint2(ln->endPoint().x(), ln->endPoint().y(), ln->endPoint().z());
@@ -170,7 +173,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetOpacity(ln->getOpacity());
         actor->SetVisibility(ln->isVisible());
     } else if (auto* mdl = qobject_cast<ModelNode*>(node)) {
-        // Placeholder: create a sphere actor when no real mesh is loaded
+        // 占位实现：在尚未加载真实网格时先创建一个球体演员
         auto sphere = vtkSmartPointer<vtkSphereSource>::New();
         sphere->SetRadius(5.0);
         sphere->Update();
@@ -181,7 +184,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetColor(c.redF(), c.greenF(), c.blueF());
         actor->GetProperty()->SetOpacity(mdl->getOpacity());
         actor->SetVisibility(mdl->isVisible());
-        // Render mode
+        // 渲染模式
         if (mdl->renderMode() == RENDER_MODE_POINTS) {
             actor->GetProperty()->SetRepresentationToPoints();
         } else if (mdl->renderMode() == RENDER_MODE_WIREFRAME) {
@@ -189,14 +192,14 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         } else {
             actor->GetProperty()->SetRepresentationToSurface();
         }
-        // Edge display
+        // 边缘显示
         actor->GetProperty()->SetEdgeVisibility(mdl->isShowEdges());
         if (mdl->isShowEdges()) {
             QColor ec = mdl->getEdgeColor();
             actor->GetProperty()->SetEdgeColor(ec.redF(), ec.greenF(), ec.blueF());
             actor->GetProperty()->SetLineWidth(static_cast<float>(mdl->getEdgeWidth()));
         }
-        // Backface culling
+        // 背面剔除
         actor->GetProperty()->SetBackfaceCulling(mdl->isBackfaceCulling());
     }
 }
@@ -227,11 +230,11 @@ void VtkSceneWindow::applyCameraParameters(const CameraParameters& params) {
 }
 
 void VtkSceneWindow::resetCamera() {
-    // Restore to initial camera parameters (design section 13.2 UI constraint 5)
+    // 恢复为初始相机参数，对应设计 13.2 的界面约束 5
     applyCameraParameters(initialCameraParams_);
     renderWindow()->Render();
 }
 
 void VtkSceneWindow::onInteraction() {
-    cameraResetTimer_.start(); // restart 3-second timer
+    cameraResetTimer_.start(); // 重新开始 3 秒计时
 }

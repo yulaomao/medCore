@@ -1,3 +1,6 @@
+// 文件说明：实现规划模块逻辑，负责模型加载和规划线维护。
+// 该文件属于 medCore 当前主工程源码范围，用于承载对应模块的核心实现。
+
 #include "PlanningModuleHandler.h"
 
 PlanningModuleHandler::PlanningModuleHandler(SceneGraph* sceneGraph, QObject* parent)
