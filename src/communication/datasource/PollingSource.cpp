@@ -31,11 +31,14 @@ void PollingSource::onTimerTick() {
     }
 
     QPointer<PollingTask> guard(task_);
-    QThreadPool::globalInstance()->start([guard, this]() {
+    QPointer<PollingSource> sourceGuard(this);
+    QThreadPool::globalInstance()->start([guard, sourceGuard]() {
         if (guard) {
             guard->run();
         }
-        taskRunning_.store(false, std::memory_order_release);
+        if (sourceGuard) {
+            sourceGuard->taskRunning_.store(false, std::memory_order_release);
+        }
     });
 }
 
