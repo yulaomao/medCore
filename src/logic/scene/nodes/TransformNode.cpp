@@ -4,6 +4,8 @@
 TransformNode::TransformNode(QObject* parent)
     : NodeBase("TransformNode", parent)
 {
+    // Design: axes visualization defaults to layer 3
+    defaultDisplayTarget_ = DisplayTarget{true, 3};
     rebuildMatrixToParent();
 }
 
@@ -42,6 +44,14 @@ void TransformNode::setMatrixToParent(const QMatrix4x4& matrix) {
     markDirty();
 }
 
+void TransformNode::setMatrixTransformToParent(const QMatrix4x4& matrix) {
+    setMatrixToParent(matrix);
+}
+
+QMatrix4x4 TransformNode::getMatrixTransformToParent() const {
+    return matrixToParent();
+}
+
 QMatrix4x4 TransformNode::getMatrix() const {
     return matrixToParent();
 }
@@ -53,6 +63,34 @@ void TransformNode::setMatrix(const QMatrix4x4& matrix) {
 QMatrix4x4 TransformNode::getInverseMatrix() const {
     return matrixToParent_.inverted();
 }
+
+// --- Transform operations ---
+
+void TransformNode::multiplyBy(const QMatrix4x4& other) {
+    matrixToParent_ = matrixToParent_ * other;
+    translation_ = QVector3D(matrixToParent_(0, 3), matrixToParent_(1, 3), matrixToParent_(2, 3));
+    markDirty();
+}
+
+void TransformNode::inverse() {
+    matrixToParent_ = matrixToParent_.inverted();
+    translation_ = QVector3D(matrixToParent_(0, 3), matrixToParent_(1, 3), matrixToParent_(2, 3));
+    markDirty();
+}
+
+bool TransformNode::isIdentity() const {
+    return matrixToParent_.isIdentity();
+}
+
+QVector3D TransformNode::transformPoint(const QVector3D& point) const {
+    return matrixToParent_.map(point);
+}
+
+QVector3D TransformNode::transformVector(const QVector3D& vector) const {
+    return matrixToParent_.mapVector(vector);
+}
+
+// --- Parent transform ---
 
 QString TransformNode::parentTransformId() const {
     return parentTransformId_;
@@ -71,6 +109,8 @@ void TransformNode::setParentTransform(const QString& parentId) {
     setParentTransformId(parentId);
 }
 
+// --- Transform metadata ---
+
 QString TransformNode::transformKind() const {
     return transformKind_;
 }
@@ -79,6 +119,31 @@ void TransformNode::setTransformKind(const QString& kind) {
     transformKind_ = kind;
     markDirty();
 }
+
+QString TransformNode::sourceSpaceName() const { return sourceSpaceName_; }
+void TransformNode::setSourceSpaceName(const QString& name) { sourceSpaceName_ = name; markDirty(); }
+
+QString TransformNode::targetSpaceName() const { return targetSpaceName_; }
+void TransformNode::setTargetSpaceName(const QString& name) { targetSpaceName_ = name; markDirty(); }
+
+// --- Axes visualization ---
+
+bool TransformNode::isShowAxes() const { return showAxesFlag_; }
+void TransformNode::setShowAxes(bool show) { showAxesFlag_ = show; markDirty(); }
+
+double TransformNode::getAxesLength() const { return axesLengthValue_; }
+void TransformNode::setAxesLength(double length) { axesLengthValue_ = length; markDirty(); }
+
+QColor TransformNode::getAxesColorX() const { return axesColorX_; }
+void TransformNode::setAxesColorX(const QColor& color) { axesColorX_ = color; markDirty(); }
+
+QColor TransformNode::getAxesColorY() const { return axesColorY_; }
+void TransformNode::setAxesColorY(const QColor& color) { axesColorY_ = color; markDirty(); }
+
+QColor TransformNode::getAxesColorZ() const { return axesColorZ_; }
+void TransformNode::setAxesColorZ(const QColor& color) { axesColorZ_ = color; markDirty(); }
+
+// --- Internal ---
 
 void TransformNode::rebuildMatrixToParent() {
     QMatrix4x4 m;
@@ -89,6 +154,8 @@ void TransformNode::rebuildMatrixToParent() {
     m.scale(scale_);
     matrixToParent_ = m;
 }
+
+// --- Serialization ---
 
 static QJsonObject encodeVec3(const QVector3D& v) {
     QJsonObject o; o["x"] = v.x(); o["y"] = v.y(); o["z"] = v.z(); return o;
@@ -104,6 +171,13 @@ QJsonObject TransformNode::toJson() const {
     obj["scale"]       = encodeVec3(scale_);
     obj["parentTransformId"] = parentTransformId_;
     obj["transformKind"] = transformKind_;
+    obj["sourceSpaceName"] = sourceSpaceName_;
+    obj["targetSpaceName"] = targetSpaceName_;
+    obj["showAxesFlag"] = showAxesFlag_;
+    obj["axesLengthValue"] = axesLengthValue_;
+    obj["axesColorX"] = axesColorX_.name();
+    obj["axesColorY"] = axesColorY_.name();
+    obj["axesColorZ"] = axesColorZ_.name();
     QJsonArray matrixRows;
     for (int row = 0; row < 4; ++row) {
         QJsonArray matrixRow;
@@ -122,6 +196,13 @@ void TransformNode::fromJson(const QJsonObject& obj) {
     if (obj.contains("scale"))       scale_       = decodeVec3(obj["scale"].toObject());
     parentTransformId_ = obj["parentTransformId"].toString();
     transformKind_ = obj["transformKind"].toString(transformKind_);
+    sourceSpaceName_ = obj["sourceSpaceName"].toString();
+    targetSpaceName_ = obj["targetSpaceName"].toString();
+    showAxesFlag_ = obj["showAxesFlag"].toBool(false);
+    axesLengthValue_ = obj["axesLengthValue"].toDouble(50.0);
+    if (obj.contains("axesColorX")) axesColorX_ = QColor(obj["axesColorX"].toString());
+    if (obj.contains("axesColorY")) axesColorY_ = QColor(obj["axesColorY"].toString());
+    if (obj.contains("axesColorZ")) axesColorZ_ = QColor(obj["axesColorZ"].toString());
     if (obj.contains("matrixToParent")) {
         const QJsonArray matrixRows = obj["matrixToParent"].toArray();
         QMatrix4x4 matrix;
