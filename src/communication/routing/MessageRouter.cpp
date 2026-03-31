@@ -34,8 +34,8 @@ void MessageRouter::registerRoute(const QString& channelPattern, QObject* receiv
     r.slot     = QString::fromUtf8(slot);
     routes_.append(r);
 
-    connect(receiver, &QObject::destroyed, this, [this]() {
-        unregisterRoutes(sender());
+    connect(receiver, &QObject::destroyed, this, [this, receiver]() {
+        unregisterRoutes(receiver);
     });
 }
 
