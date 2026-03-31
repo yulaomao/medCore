@@ -11,6 +11,9 @@ void CommunicationHub::addDataSource(QSharedPointer<SourceBase> source) {
     connect(source.data(), &SourceBase::sampleReady,
             this, &CommunicationHub::onSampleReady,
             Qt::QueuedConnection);
+    connect(source.data(), &SourceBase::errorOccurred,
+            this, &CommunicationHub::onSourceError,
+            Qt::QueuedConnection);
 }
 
 void CommunicationHub::removeDataSource(const QString& channelName) {
@@ -49,5 +52,22 @@ void CommunicationHub::onSampleReady(const StateSample& sample) {
                                   Qt::QueuedConnection,
                                   Q_ARG(QString, sample.channel),
                                   Q_ARG(QJsonObject, sample.data));
+    }
+}
+
+void CommunicationHub::onSourceError(const QString& channelName, const QString& errorMessage) {
+    emit dataSourceError(channelName, errorMessage);
+
+    // Forward data source errors to LogicRuntime as a notification-level error
+    if (logicRuntime_) {
+        QJsonObject errorPayload;
+        errorPayload["channel"] = channelName;
+        errorPayload["error"] = errorMessage;
+        errorPayload["errorCode"] = "COMM_DATA_SOURCE_ERROR";
+        errorPayload["recoverable"] = true;
+        QMetaObject::invokeMethod(logicRuntime_, "onStateSample",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QString, QStringLiteral("system.error")),
+                                  Q_ARG(QJsonObject, errorPayload));
     }
 }
