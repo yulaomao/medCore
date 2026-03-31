@@ -13,7 +13,6 @@
 #include "../../modules/pointpick/PointPickModuleCoordinator.h"
 #include "../../modules/pointpick/PointPickModuleHandler.h"
 #include "../../ui/vtk3d/VtkSceneWindow.h"
-#include <QDebug>
 
 // 具体初始化器实现
 class DefaultSoftwareInitializer : public BaseSoftwareInitializer {

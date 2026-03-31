@@ -5,7 +5,6 @@
 #include <QAction>
 #include <QApplication>
 #include <QCoreApplication>
-#include <QPointer>
 #include <QStackedWidget>
 #include "../../communication/routing/MessageRouter.h"
 #include "../../logic/runtime/LogicRuntime.h"

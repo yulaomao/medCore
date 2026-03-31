@@ -9,7 +9,6 @@
 
 class QApplication;
 class ApplicationCoordinator;
-class GlobalUiManager;
 class LogicRuntime;
 class MainWindow;
 class MessageRouter;
