@@ -12,8 +12,9 @@ public:
 
     void registerHandler(QSharedPointer<ModuleLogicHandler> handler);
     QSharedPointer<ModuleLogicHandler> getHandler(const QString& moduleName) const;
-    QVector<QSharedPointer<ModuleLogicHandler>> allHandlers() const;
+    const QVector<QSharedPointer<ModuleLogicHandler>>& allHandlers() const;
 
 private:
     QHash<QString, QSharedPointer<ModuleLogicHandler>> handlers_;
+    QVector<QSharedPointer<ModuleLogicHandler>> handlerList_;
 };

@@ -22,6 +22,7 @@ private:
     void addParamField(const QString& key, const QString& defaultValue = QString());
 
     QWidget* page_{nullptr};
+    QWidget* rightPanel_{nullptr};
     QFormLayout* formLayout_{nullptr};
     QHash<QString, QLineEdit*> fields_;
 };

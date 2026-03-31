@@ -23,6 +23,7 @@ private:
     void buildUi();
 
     QWidget* page_{nullptr};
+    QLabel* summaryLabel_{nullptr};
     QListWidget* modelList_{nullptr};
     QListWidget* lineList_{nullptr};
     VtkSceneWindow* sceneWindow_;

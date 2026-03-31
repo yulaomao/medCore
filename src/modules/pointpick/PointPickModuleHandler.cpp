@@ -38,7 +38,8 @@ void PointPickModuleHandler::onStateSample(const QString& channel, const QJsonOb
     }
     QJsonObject payload;
     payload["count"] = managedPoints_.size();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule);
 }
 
 void PointPickModuleHandler::addPoint(const QJsonObject& params, const QUuid& sourceActionId) {
@@ -57,7 +58,8 @@ void PointPickModuleHandler::addPoint(const QJsonObject& params, const QUuid& so
     QJsonObject payload;
     payload["pointId"] = id;
     payload["count"]   = managedPoints_.size();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }
 
 void PointPickModuleHandler::removePoint(const QString& pointId, const QUuid& sourceActionId) {
@@ -67,7 +69,8 @@ void PointPickModuleHandler::removePoint(const QString& pointId, const QUuid& so
     QJsonObject payload;
     payload["pointId"] = pointId;
     payload["count"]   = managedPoints_.size();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }
 
 void PointPickModuleHandler::clearPoints(const QUuid& sourceActionId) {
@@ -77,5 +80,6 @@ void PointPickModuleHandler::clearPoints(const QUuid& sourceActionId) {
 
     QJsonObject payload;
     payload["count"] = 0;
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }

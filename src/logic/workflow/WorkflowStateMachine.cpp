@@ -11,14 +11,12 @@ WorkflowStateMachine::WorkflowStateMachine(const QStringList& workflowSequence,
 {}
 
 QString WorkflowStateMachine::currentModule() const { return currentModule_; }
+QStringList WorkflowStateMachine::workflowSequence() const { return workflowSequence_; }
 
 bool WorkflowStateMachine::canEnter(const QString& module) const {
-    if (enterableModules_.contains(module)) return true;
-    // Allow forward traversal in workflow sequence
-    int currentIdx = workflowSequence_.indexOf(currentModule_);
-    int targetIdx  = workflowSequence_.indexOf(module);
-    if (currentIdx >= 0 && targetIdx >= 0 && targetIdx >= currentIdx) return true;
-    return false;
+    if (!workflowSequence_.contains(module)) return false;
+    if (enterableModules_.isEmpty()) return true;
+    return enterableModules_.contains(module);
 }
 
 bool WorkflowStateMachine::advance(const QString& targetModule) {

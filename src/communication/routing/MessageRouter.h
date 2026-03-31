@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QJsonObject>
+#include <QPointer>
 #include <QVector>
 #include <QRegularExpression>
 
@@ -17,10 +18,13 @@ signals:
     void unroutedMessage(const QString& channel, const QJsonObject& message);
 
 private:
+    void cleanupStaleRoutes();
+
     struct Route {
         QRegularExpression pattern;
-        QObject* receiver;
+        QPointer<QObject> receiver;
         QString slot;
     };
     QVector<Route> routes_;
+    bool hasStaleRoutes_{false};
 };

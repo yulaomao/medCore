@@ -11,6 +11,7 @@ public:
                                    QObject* parent = nullptr);
 
     QString currentModule() const;
+    QStringList workflowSequence() const;
     bool canEnter(const QString& module) const;
     bool advance(const QString& targetModule);
 

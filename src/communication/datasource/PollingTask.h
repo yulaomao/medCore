@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QJsonObject>
+#include <atomic>
 #include "StateSample.h"
 
 class PollingTask : public QObject {
@@ -23,5 +24,5 @@ public slots:
 private:
     QString channel_;
     int intervalMs_;
-    quint64 sequenceNumber_{0};
+    std::atomic<quint64> sequenceNumber_{0};
 };

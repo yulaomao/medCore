@@ -1,6 +1,5 @@
 #pragma once
 #include <QObject>
-#include <QThread>
 #include <QSharedPointer>
 #include "../../logic/gateway/ILogicGateway.h"
 #include "../../logic/registry/ModuleLogicRegistry.h"
@@ -37,9 +36,11 @@ private slots:
     void onHandlerNotification(const LogicNotification& notification);
 
 private:
+    void emitWorkflowBlocked(const UiAction& action, const QString& targetModule, const QString& reason);
+    QString targetModuleForAction(const UiAction& action) const;
+
     ModuleLogicRegistry* registry_;
     WorkflowStateMachine* workflow_;
     SceneGraph* sceneGraph_;
-    QThread* workerThread_;
     QString connectionState_{"Disconnected"};
 };

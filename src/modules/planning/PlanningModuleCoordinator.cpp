@@ -49,6 +49,9 @@ void PlanningModuleCoordinator::buildUi() {
 
     mainLayout->addWidget(splitter);
 
+    summaryLabel_ = new QLabel("模型：0，规划线：0");
+    setAttachmentWidget(AttachmentSlot::Bottom, summaryLabel_);
+
     connect(loadModelBtn, &QPushButton::clicked, this, &PlanningModuleCoordinator::onLoadModelClicked);
     connect(addLineBtn,   &QPushButton::clicked, this, &PlanningModuleCoordinator::onAddLineClicked);
 }
@@ -89,5 +92,10 @@ void PlanningModuleCoordinator::onModuleNotification(const LogicNotification& no
         lineList_->clear();
         for (int i = 0; i < count; ++i)
             lineList_->addItem(QString("Line %1").arg(i + 1));
+    }
+    if (summaryLabel_) {
+        summaryLabel_->setText(QString("模型：%1，规划线：%2")
+                                   .arg(modelList_ ? modelList_->count() : 0)
+                                   .arg(lineList_ ? lineList_->count() : 0));
     }
 }

@@ -12,9 +12,16 @@ void LineNode::setEndPoint(const QVector3D& pt) { endPoint_ = pt; markDirty(); }
 
 QColor LineNode::color() const { return color_; }
 void LineNode::setColor(const QColor& color) { color_ = color; markDirty(); }
+QColor LineNode::getColor() const { return color(); }
 
 double LineNode::lineWidth() const { return lineWidth_; }
 void LineNode::setLineWidth(double width) { lineWidth_ = width; markDirty(); }
+bool LineNode::isVisible() const { return visibilityFlag_; }
+void LineNode::setVisibility(bool visible) { visibilityFlag_ = visible; markDirty(); }
+double LineNode::getOpacity() const { return opacityValue_; }
+void LineNode::setOpacity(double opacity) { opacityValue_ = qBound(0.0, opacity, 1.0); markDirty(); }
+QString LineNode::renderMode() const { return renderMode_; }
+void LineNode::setRenderMode(const QString& mode) { renderMode_ = mode; markDirty(); }
 
 QJsonObject LineNode::toJson() const {
     QJsonObject obj = NodeBase::toJson();
@@ -25,6 +32,9 @@ QJsonObject LineNode::toJson() const {
     obj["endPoint"]   = encodeVec(endPoint_);
     obj["color"]      = color_.name();
     obj["lineWidth"]  = lineWidth_;
+    obj["visibilityFlag"] = visibilityFlag_;
+    obj["opacityValue"] = opacityValue_;
+    obj["renderMode"] = renderMode_;
     return obj;
 }
 
@@ -37,4 +47,7 @@ void LineNode::fromJson(const QJsonObject& obj) {
     if (obj.contains("endPoint"))   endPoint_   = decodeVec(obj["endPoint"].toObject());
     if (obj.contains("color"))      color_      = QColor(obj["color"].toString());
     lineWidth_ = obj["lineWidth"].toDouble(2.0);
+    visibilityFlag_ = obj["visibilityFlag"].toBool(true);
+    opacityValue_ = obj["opacityValue"].toDouble(1.0);
+    renderMode_ = obj["renderMode"].toString("wireframe");
 }

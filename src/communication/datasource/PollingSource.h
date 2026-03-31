@@ -3,6 +3,8 @@
 #include "PollingTask.h"
 #include <QTimer>
 #include <QThreadPool>
+#include <atomic>
+#include <memory>
 
 class PollingSource : public SourceBase {
     Q_OBJECT
@@ -20,4 +22,7 @@ private slots:
 private:
     PollingTask* task_;
     QTimer* timer_;
+    std::shared_ptr<std::atomic_bool> taskRunning_{
+        std::make_shared<std::atomic_bool>(false)
+    };
 };

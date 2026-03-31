@@ -19,6 +19,7 @@ private:
     void updatePoseDisplay(const QJsonObject& payload);
 
     QWidget* page_{nullptr};
+    QLabel* statusLabel_{nullptr};
     QLabel* positionLabel_{nullptr};
     QLabel* rotationLabel_{nullptr};
     VtkSceneWindow* sceneWindow_;

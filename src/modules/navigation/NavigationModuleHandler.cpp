@@ -18,7 +18,8 @@ void NavigationModuleHandler::onAction(const UiAction& action) {
         QJsonObject payload;
         payload["poseNodeId"] = poseNodeId_;
         emitNotification(EventType::ModuleReady, NotificationLevel::Info,
-                         payload, action.actionId);
+                         payload, TargetScope::CurrentModule,
+                         action.actionId);
     }
 }
 
@@ -41,5 +42,6 @@ void NavigationModuleHandler::onStateSample(const QString& channel, const QJsonO
     payload["poseNodeId"] = poseNodeId_;
     payload["translation"] = data.value("translation");
     payload["rotation"]    = data.value("rotation");
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule);
 }

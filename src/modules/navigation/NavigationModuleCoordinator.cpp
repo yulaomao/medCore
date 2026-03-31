@@ -44,6 +44,9 @@ void NavigationModuleCoordinator::buildUi() {
     splitter->setStretchFactor(1, 3);
 
     mainLayout->addWidget(splitter);
+
+    statusLabel_ = new QLabel("等待导航位姿数据…");
+    setAttachmentWidget(AttachmentSlot::Bottom, statusLabel_);
 }
 
 void NavigationModuleCoordinator::activate() {
@@ -73,4 +76,9 @@ void NavigationModuleCoordinator::updatePoseDisplay(const QJsonObject& payload) 
         .arg(r["x"].toDouble(), 0, 'f', 1)
         .arg(r["y"].toDouble(), 0, 'f', 1)
         .arg(r["z"].toDouble(), 0, 'f', 1));
+
+    if (statusLabel_) {
+        statusLabel_->setText(QString("导航位姿已更新：%1 / %2")
+                                  .arg(positionLabel_->text(), rotationLabel_->text()));
+    }
 }
