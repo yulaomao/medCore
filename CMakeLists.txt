@@ -14,30 +14,23 @@ set(MEDCORE_QT_MODULES
     Qt${QT_VERSION_MAJOR}::Network
 )
 
-# VTK from bundled source tree
-set(MEDCORE_VTK_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirtyPart/vtk-src")
-if (NOT EXISTS "${MEDCORE_VTK_SOURCE_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR "Bundled VTK source tree not found: ${MEDCORE_VTK_SOURCE_DIR}")
+# VTK pre-compiled installation directory
+set(MEDCORE_VTK_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirtyPart/vtk")
+if (NOT EXISTS "${MEDCORE_VTK_INSTALL_DIR}")
+    message(FATAL_ERROR "VTK pre-built not found at ${MEDCORE_VTK_INSTALL_DIR}. Please compile VTK first using: build_vtk.ps1 or cmake commands provided in the build notes.")
 endif()
 
-set(VTK_QT_VERSION ${QT_VERSION_MAJOR} CACHE STRING "Qt major version for bundled VTK" FORCE)
-set(VTK_BUILD_TESTING OFF CACHE STRING "Disable VTK tests" FORCE)
-set(VTK_BUILD_EXAMPLES OFF CACHE BOOL "Disable VTK examples" FORCE)
-set(VTK_BUILD_DOCUMENTATION OFF CACHE BOOL "Disable VTK documentation" FORCE)
-set(VTK_BUILD_ALL_MODULES OFF CACHE BOOL "Build only requested VTK modules" FORCE)
-set(VTK_ENABLE_REMOTE_MODULES OFF CACHE BOOL "Disable VTK remote modules" FORCE)
-set(VTK_ENABLE_WRAPPING OFF CACHE BOOL "Disable VTK wrapping" FORCE)
-set(VTK_GROUP_ENABLE_Qt YES CACHE STRING "Enable VTK Qt support" FORCE)
-
-set(VTK_MODULE_ENABLE_VTK_CommonColor YES CACHE STRING "Enable VTK CommonColor" FORCE)
-set(VTK_MODULE_ENABLE_VTK_CommonCore YES CACHE STRING "Enable VTK CommonCore" FORCE)
-set(VTK_MODULE_ENABLE_VTK_FiltersSources YES CACHE STRING "Enable VTK FiltersSources" FORCE)
-set(VTK_MODULE_ENABLE_VTK_GUISupportQt YES CACHE STRING "Enable VTK GUISupportQt" FORCE)
-set(VTK_MODULE_ENABLE_VTK_InteractionStyle YES CACHE STRING "Enable VTK InteractionStyle" FORCE)
-set(VTK_MODULE_ENABLE_VTK_RenderingCore YES CACHE STRING "Enable VTK RenderingCore" FORCE)
-set(VTK_MODULE_ENABLE_VTK_RenderingOpenGL2 YES CACHE STRING "Enable VTK RenderingOpenGL2" FORCE)
-
-add_subdirectory("${MEDCORE_VTK_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/third_party/vtk" EXCLUDE_FROM_ALL)
+list(APPEND CMAKE_PREFIX_PATH "${MEDCORE_VTK_INSTALL_DIR}")
+find_package(VTK REQUIRED
+    COMPONENTS
+        CommonColor
+        CommonCore
+        FiltersSources
+        GUISupportQt
+        InteractionStyle
+        RenderingCore
+        RenderingOpenGL2
+)
 
 set(MEDCORE_VTK_MODULES
     VTK::CommonColor
@@ -162,7 +155,7 @@ endif()
 if (WIN32)
     add_custom_command(TARGET medCore POST_BUILD
         COMMAND powershell -NoProfile -ExecutionPolicy Bypass -Command
-            "if (Test-Path '${CMAKE_CURRENT_BINARY_DIR}/third_party/vtk/bin/$<CONFIG>') { Get-ChildItem -Path '${CMAKE_CURRENT_BINARY_DIR}/third_party/vtk/bin/$<CONFIG>' -Filter '*.dll' | Copy-Item -Destination '$<TARGET_FILE_DIR:medCore>' -Force }"
+            "Get-ChildItem -Path '${MEDCORE_VTK_INSTALL_DIR}/bin' -Filter '*.dll' | Copy-Item -Destination '$<TARGET_FILE_DIR:medCore>' -Force"
         COMMENT "Deploying VTK runtime dependencies"
         VERBATIM
     )
