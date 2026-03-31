@@ -37,12 +37,12 @@ void PollingSource::onTimerTick() {
     }
 
     QPointer<PollingTask> guard(task_);
-    const auto taskRunningFlag = taskRunning_;
-    QThreadPool::globalInstance()->start([guard, taskRunningFlag]() {
+    const auto runningFlag = taskRunning_;
+    QThreadPool::globalInstance()->start([guard, runningFlag]() {
         if (guard) {
             guard->run();
         }
-        taskRunningFlag->store(false, std::memory_order_release);
+        runningFlag->store(false, std::memory_order_release);
     });
 }
 
