@@ -6,9 +6,13 @@
 #include "../../contracts/UiAction.h"
 #include "../../contracts/LogicNotification.h"
 
+/// 逻辑网关接口。
+///
+/// 为界面协调器提供统一的动作发送、通知订阅和连接状态查询能力。
 class ILogicGateway : public QObject {
     Q_OBJECT
 public:
+    // --- 生命周期与基础接口 ---
     explicit ILogicGateway(QObject* parent = nullptr) : QObject(parent) {}
     ~ILogicGateway() override = default;
 
