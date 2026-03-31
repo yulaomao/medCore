@@ -28,6 +28,10 @@ void ParamsModuleCoordinator::buildUi() {
     addParamField("patientId");
     addParamField("studyDescription");
     addParamField("operatorName");
+
+    rightPanel_ = new QLabel("当前模块负责基础参数录入与同步结果展示。");
+    rightPanel_->setMinimumWidth(240);
+    setAttachmentWidget(AttachmentSlot::Right, rightPanel_);
 }
 
 void ParamsModuleCoordinator::addParamField(const QString& key, const QString& defaultValue) {

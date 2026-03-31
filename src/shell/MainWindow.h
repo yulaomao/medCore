@@ -7,6 +7,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(WorkspaceShell* workspaceShell, QWidget* parent = nullptr);
+    WorkspaceShell* workspaceShell() const;
 
 signals:
     void shutdownRequested();

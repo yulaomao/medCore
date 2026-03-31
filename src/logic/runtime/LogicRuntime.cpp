@@ -16,6 +16,25 @@ LogicRuntime::LogicRuntime(ModuleLogicRegistry* registry,
                 this, &LogicRuntime::onHandlerNotification,
                 Qt::QueuedConnection);
     }
+
+    connect(workflow_, &WorkflowStateMachine::moduleChanged, this,
+            [this](const QString& oldModule, const QString& newModule) {
+                QJsonObject payload;
+                payload["oldModule"] = oldModule;
+                payload["module"] = newModule;
+                payload["currentModule"] = newModule;
+                emit notificationReceived(
+                    LogicNotification::create(EventType::ModuleChanged,
+                                              NotificationLevel::Info,
+                                              payload,
+                                              TargetScope::Shell));
+                emit notificationReceived(
+                    LogicNotification::create(EventType::WorkflowChanged,
+                                              NotificationLevel::Info,
+                                              payload,
+                                              TargetScope::Shell));
+            },
+            Qt::QueuedConnection);
 }
 
 LogicRuntime::~LogicRuntime() {
@@ -25,12 +44,14 @@ LogicRuntime::~LogicRuntime() {
 void LogicRuntime::start() {
     if (connectionState_ != "Connected") {
         connectionState_ = "Connected";
+        emit connectionStateChanged(connectionState_);
     }
 }
 
 void LogicRuntime::stop() {
     if (connectionState_ != "Disconnected") {
         connectionState_ = "Disconnected";
+        emit connectionStateChanged(connectionState_);
     }
 }
 

@@ -11,7 +11,7 @@ void ModuleLogicHandler::emitNotification(EventType evType, NotificationLevel lv
                                            const QUuid& sourceActionId)
 {
     auto n = LogicNotification::create(evType, lvl, payload,
-                                       TargetScope::Module,
+                                       TargetScope::ModuleList,
                                        {moduleName()},
                                        sourceActionId);
     emit logicNotification(n);

@@ -8,12 +8,17 @@
 
 enum class EventType {
     Unknown,
+    ModuleChanged,
+    PageChanged,
+    WorkflowChanged,
+    ConnectionStateChanged,
+    SceneNodesUpdated,
     StateChanged,
     ModuleReady,
     ModuleError,
-    WorkflowAdvanced,
-    SceneUpdated,
-    DataArrived
+    DataArrived,
+    WorkflowAdvanced = WorkflowChanged,
+    SceneUpdated = SceneNodesUpdated
 };
 
 enum class NotificationLevel {
@@ -24,9 +29,12 @@ enum class NotificationLevel {
 };
 
 enum class TargetScope {
-    All,
-    Module,
-    Shell
+    Shell,
+    CurrentModule,
+    AllModules,
+    ModuleList,
+    All = AllModules,
+    Module = ModuleList
 };
 
 struct LogicNotification {

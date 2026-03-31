@@ -97,10 +97,10 @@ void VtkSceneWindow::updateNodes(const QVector<NodeBase*>& nodes) {
             actorCache_[id] = actor;
         }
 
-        // Assign to correct renderer based on layer
+        // Map guide layers 1/2/3 to VTK render layers model/overlay/top.
         vtkRenderer* target = modelRenderer_;
-        if (dt.layer == 1) target = overlayRenderer_;
-        else if (dt.layer == 2) target = topRenderer_;
+        if (dt.layer == 2) target = overlayRenderer_;
+        else if (dt.layer == 3) target = topRenderer_;
 
         if (!target->HasViewProp(actor)) {
             modelRenderer_->RemoveActor(actor);
@@ -144,8 +144,10 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputData(sphere->GetOutput());
         actor->SetMapper(mapper);
-        QColor c = pt->color();
+        QColor c = pt->getColor();
         actor->GetProperty()->SetColor(c.redF(), c.greenF(), c.blueF());
+        actor->GetProperty()->SetOpacity(pt->getOpacity());
+        actor->SetVisibility(pt->isVisible());
     } else if (auto* ln = qobject_cast<LineNode*>(node)) {
         auto line = vtkSmartPointer<vtkLineSource>::New();
         line->SetPoint1(ln->startPoint().x(), ln->startPoint().y(), ln->startPoint().z());
@@ -154,9 +156,11 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputData(line->GetOutput());
         actor->SetMapper(mapper);
-        QColor c = ln->color();
+        QColor c = ln->getColor();
         actor->GetProperty()->SetColor(c.redF(), c.greenF(), c.blueF());
         actor->GetProperty()->SetLineWidth(static_cast<float>(ln->lineWidth()));
+        actor->GetProperty()->SetOpacity(ln->getOpacity());
+        actor->SetVisibility(ln->isVisible());
     } else if (auto* mdl = qobject_cast<ModelNode*>(node)) {
         // Placeholder: create a unit cube actor when no file is loaded
         auto sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -165,12 +169,16 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputData(sphere->GetOutput());
         actor->SetMapper(mapper);
-        QColor c = mdl->color();
+        QColor c = mdl->getColor();
         actor->GetProperty()->SetColor(c.redF(), c.greenF(), c.blueF());
-        actor->GetProperty()->SetOpacity(mdl->opacity());
+        actor->GetProperty()->SetOpacity(mdl->getOpacity());
+        actor->SetVisibility(mdl->isVisible());
         actor->GetProperty()->SetRepresentationToWireframe();
-        if (!mdl->wireframe())
+        if (mdl->renderMode() == "points") {
+            actor->GetProperty()->SetRepresentationToPoints();
+        } else if (mdl->renderMode() != "wireframe") {
             actor->GetProperty()->SetRepresentationToSurface();
+        }
     }
 }
 

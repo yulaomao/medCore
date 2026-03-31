@@ -7,6 +7,7 @@
 #include "../globalui/GlobalUiManager.h"
 
 class MainWindow;
+class WorkspaceShell;
 
 class ApplicationCoordinator : public QObject {
     Q_OBJECT
@@ -25,11 +26,15 @@ signals:
 
 public slots:
     void onNotification(const LogicNotification& notification);
+    void onConnectionStateChanged(const QString& state);
 
 private:
+    void mountModuleAttachments(const QString& moduleName);
+
     ILogicGateway* gateway_;
     PageManager* pageManager_;
     GlobalUiManager* uiManager_;
     QHash<QString, QSharedPointer<ModuleCoordinator>> coordinators_;
     QString activeModule_;
+    WorkspaceShell* workspaceShell_{nullptr};
 };
