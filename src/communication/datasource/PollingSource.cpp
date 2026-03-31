@@ -6,7 +6,6 @@ PollingSource::PollingSource(PollingTask* task, QObject* parent)
     , task_(task)
     , timer_(new QTimer(this))
 {
-    Q_ASSERT(task_);
     if (!task_) {
         return;
     }
@@ -38,12 +37,12 @@ void PollingSource::onTimerTick() {
     }
 
     QPointer<PollingTask> guard(task_);
-    const auto taskRunning = taskRunning_;
-    QThreadPool::globalInstance()->start([guard, taskRunning]() {
+    const auto taskRunningFlag = taskRunning_;
+    QThreadPool::globalInstance()->start([guard, taskRunningFlag]() {
         if (guard) {
             guard->run();
         }
-        taskRunning->store(false, std::memory_order_release);
+        taskRunningFlag->store(false, std::memory_order_release);
     });
 }
 
