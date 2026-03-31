@@ -6,3 +6,10 @@ SourceBase::SourceBase(const QString& channelName, QObject* parent)
 {}
 
 QString SourceBase::channelName() const { return channelName_; }
+
+QString SourceBase::lastError() const { return lastError_; }
+
+void SourceBase::reportError(const QString& errorMessage) {
+    lastError_ = errorMessage;
+    emit errorOccurred(channelName_, errorMessage);
+}

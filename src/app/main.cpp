@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
     communicationHub->setLogicRuntime(logicRuntime.data());
     communicationHub->start();
 
-    // 6. Create VTK scene windows
+    // 6. Create VTK scene windows (parented to app to prevent memory leaks)
     auto* pointPickWindow = new VtkSceneWindow("pointpick-window");
     auto* planningWindow  = new VtkSceneWindow("planning-window");
     auto* navWindow       = new VtkSceneWindow("navigation-window");
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
     auto navCoord       = enabledModules.contains("navigation")
         ? QSharedPointer<NavigationModuleCoordinator>::create(navWindow) : QSharedPointer<NavigationModuleCoordinator>();
 
-    // 8. UI managers
+    // 8. UI managers (stackedWidget ownership transferred to WorkspaceShell via setPageArea)
     auto* stackedWidget = new QStackedWidget();
     auto* pageManager   = new PageManager(stackedWidget, &app);
     auto* uiManager     = new GlobalUiManager(&app);

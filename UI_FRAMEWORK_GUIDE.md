@@ -152,6 +152,7 @@ MainWindow
 3. ApplicationCoordinator 负责壳层级切换、挂载和全局 UI 服务，GlobalUiManager 负责全局通知、遮罩、确认层与 3D 工具窗。
 4. 模块细节由 ModuleLogicHandler 产出 LogicNotification，经 ModuleCoordinator 分发到主页面、附属模块和 3D 窗口。
 5. 单个主模块可装配多个 3D 窗口，窗口共享节点通知并依据 windowId 执行过滤和分层渲染。
+6. globalOverlayLayer 和 globalToolHost 是可交互宿主层，而不是纯视觉覆盖层；若其上承载确认层、全局通知面板或工具窗，不应通过统一的 transparent-for-mouse-events 策略让其失去交互能力。是否穿透鼠标由其内部具体部件自行决定，而不是由壳层根节点一刀切配置。
 
 ### 5.1 模块形态
 
@@ -626,6 +627,7 @@ NodeBase 不保存具体渲染参数，只保留通用数据能力。
 4. 每个窗口的默认 camera 参数在初始化时一次性设定，并作为该窗口的标准观察位姿。
 5. 交互期间允许用户临时改变 camera；当窗口交互结束后，如 3 秒内没有新的交互输入，窗口应自动将共享 camera 恢复到初始化时设定的参数。
 6. 只有窗口自己知道当前 windowId，因此层级解析必须在窗口侧完成；相机恢复规则同样由窗口侧负责执行。
+7. “恢复到初始化相机”指恢复到窗口装配时记录的 position、focalPoint、viewUp、projection 和 clippingRange 等标准参数，而不是简单调用一次通用 ResetCamera；否则不同软件或窗口预设视角会被运行时包围盒重算破坏。
 
 ---
 
@@ -1035,6 +1037,7 @@ datasource 目录至少提供以下标准对象：
 1. RedisGateway 负责底层访问，不在其监听循环中混入业务轮询调度。
 2. PollingSource 运行在独立轮询线程或独立调度器中，不与 pub/sub 监听线程混合。
 3. SourceBase、SubscriptionSource 和 PollingSource 最终都只输出 StateSample，不直接输出原始 Redis 数据。
+4. SourceBase 除样本回调外，还必须提供统一的错误回调；CommunicationHub 负责接入该错误通路并向上游逻辑层转发，不能让数据源错误停留在 datasource 内部静默丢失。
 
 ### 19.7 更新合并、节流与背压
 
@@ -1055,6 +1058,7 @@ datasource 目录至少提供以下标准对象：
 3. ModuleLogicHandler 负责把高频状态样本转换为模块内部状态、SceneGraph 更新或轻量通知。
 4. ApplicationCoordinator 只接收壳层级结果，不直接处理数据面原始样本。
 5. 由数据面适配器派生出的 synthetic scene_nodes_updated 只能作为下游刷新输出，不能再次回写为基线场景输入；此类通知必须带有明确 sourceTag 或 traceId，并在上游缓存更新路径中被过滤，以避免形成同步自调用链或反馈环。
+6. 当 CommunicationHub 收到数据源错误时，应将其转换为标准化上行结果，例如 shell 级 error 通知或等价的逻辑错误输入，再由 ApplicationCoordinator 和 GlobalUiManager 统一向用户呈现；UI 不应自行订阅底层 datasource 错误。
 
 ### 19.8.1 Demo 阶段适配约束
 
@@ -1115,6 +1119,7 @@ datasource 目录至少提供以下标准对象：
 3. 轮询任务最近成功时间。
 4. 轮询延迟与样本丢弃数。
 5. 解析失败数与字段校验失败数。
+6. 数据源错误是否已经被 CommunicationHub 成功上送到逻辑层与壳层。
 
 错误码分三类：
 
@@ -1128,6 +1133,12 @@ LogicNotification 的 error 负载包含：
 2. message
 3. recoverable
 4. suggestedAction
+5. 可选的 channel、source 或 subsystem 字段，用于标明错误来自 RedisGateway、SourceBase、PollingSource 或其他通信子层。
+
+补充约束：
+
+1. shell 级 error 或 critical 通知不能只存在于日志；ApplicationCoordinator 必须负责把这类通知交给 GlobalUiManager 做统一展示。
+2. 这样壳层错误呈现路径保持唯一：逻辑层产生真相，壳层协调器负责呈现，避免各模块 UI 分别发明自己的全局错误提示机制。
 
 ---
 
@@ -1220,5 +1231,9 @@ src/
 10. 数据面派生出的 synthetic 通知必须与服务端基线通知分离，并在缓存回灌路径中显式去环，避免 synthetic scene_nodes_updated 被再次当作基线输入处理。
 11. WorkflowStateMachine 必须同时负责模块准入真相，而不仅是 currentModule 记录；壳层导航状态和 direct switch 行为都必须受该真相约束。
 12. demo 的实时 3D 渲染必须遵守“逻辑层产出数据、UI 侧增量消费”的原则；在高频流场景下优先复用 actor，而不是把 scene_nodes_updated 实现成每帧全量重建渲染对象。
+13. 壳层中的 globalOverlayLayer 与 globalToolHost 默认按“可承载交互组件”设计；不要把其根层永久配置为鼠标穿透，否则确认层、全局面板和工具窗会在结构上失去交互能力。
+14. CommunicationHub 不能只负责样本合流，还必须承担 datasource 错误上送职责；否则通信层会形成“数据成功路径可见、错误路径不可见”的架构缺口。
+15. shell 级错误呈现必须经由 ApplicationCoordinator + GlobalUiManager 统一收口，不能依赖某个业务模块页面偶然感知并展示。
+16. 多窗口 3D 中的“恢复标准视角”必须恢复到初始化记录参数，而不是退化为通用 ResetCamera 语义。
 
 以上构成该框架的最小可用设计方案。

@@ -25,9 +25,11 @@ public:
 
 signals:
     void stateSampleReceived(const StateSample& sample);
+    void dataSourceError(const QString& channelName, const QString& errorMessage);
 
 private slots:
     void onSampleReady(const StateSample& sample);
+    void onSourceError(const QString& channelName, const QString& errorMessage);
 
 private:
     QHash<QString, QSharedPointer<SourceBase>> sources_;

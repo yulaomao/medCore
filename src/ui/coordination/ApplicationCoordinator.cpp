@@ -95,6 +95,17 @@ void ApplicationCoordinator::onNotification(const LogicNotification& notificatio
         }
         if (notification.eventType == EventType::ConnectionStateChanged)
             onConnectionStateChanged(notification.payload["state"].toString());
+
+        // Handle Shell-scoped errors: display to user via GlobalUiManager
+        if (notification.level == NotificationLevel::Error ||
+            notification.level == NotificationLevel::Critical) {
+            if (uiManager_) {
+                const QString reason = notification.payload["reason"].toString(
+                    notification.payload["error"].toString(
+                        notification.payload["message"].toString()));
+                uiManager_->showToast(tr("Error: %1").arg(reason), 5000);
+            }
+        }
     }
 }
 

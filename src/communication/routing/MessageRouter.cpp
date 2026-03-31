@@ -1,11 +1,21 @@
 #include "MessageRouter.h"
 #include <QMetaObject>
+#include <QUuid>
+#include <QDateTime>
 #include <algorithm>
 
 MessageRouter::MessageRouter(QObject* parent) : QObject(parent) {}
 
 void MessageRouter::routeMessage(const QString& channel, const QJsonObject& message) {
     cleanupStaleRoutes();
+
+    // Validate envelope if present (design section 19.3)
+    if (message.contains("msgId")) {
+        QString validationError;
+        if (!validateEnvelope(message, &validationError)) {
+            emit envelopeValidationFailed(channel, validationError);
+        }
+    }
 
     bool routed = false;
     for (const auto& route : routes_) {
@@ -46,6 +56,41 @@ void MessageRouter::unregisterRoutes(QObject* receiver) {
         std::remove_if(routes_.begin(), routes_.end(),
                        [receiver](const Route& r) { return r.receiver == receiver; }),
         routes_.end());
+}
+
+bool MessageRouter::validateEnvelope(const QJsonObject& envelope, QString* errorOut) {
+    // Design section 19.3: msgId required and globally unique, version required
+    if (!envelope.contains("msgId") || envelope["msgId"].toString().isEmpty()) {
+        if (errorOut) *errorOut = "Missing or empty msgId";
+        return false;
+    }
+    if (!envelope.contains("version") || envelope["version"].toString().isEmpty()) {
+        if (errorOut) *errorOut = "Missing or empty version";
+        return false;
+    }
+    if (!envelope.contains("msgType") || envelope["msgType"].toString().isEmpty()) {
+        if (errorOut) *errorOut = "Missing or empty msgType";
+        return false;
+    }
+    return true;
+}
+
+QJsonObject MessageRouter::wrapEnvelope(const QString& msgType,
+                                         const QJsonObject& body,
+                                         const QString& source,
+                                         const QString& target,
+                                         bool needAck) {
+    QJsonObject envelope;
+    envelope["msgId"] = QUuid::createUuid().toString();
+    envelope["msgType"] = msgType;
+    envelope["traceId"] = QUuid::createUuid().toString();
+    envelope["source"] = source;
+    envelope["target"] = target;
+    envelope["timestampMs"] = QDateTime::currentMSecsSinceEpoch();
+    envelope["version"] = "1.0";
+    envelope["needAck"] = needAck;
+    envelope["body"] = body;
+    return envelope;
 }
 
 void MessageRouter::cleanupStaleRoutes() {
