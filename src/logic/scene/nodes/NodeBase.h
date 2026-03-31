@@ -12,6 +12,13 @@ struct DisplayTarget {
     int layer{1};
 };
 
+enum class NodeEventType {
+    NodeModified,
+    PayloadModified,
+    ReferenceChanged,
+    TransformChanged
+};
+
 class NodeBase : public QObject {
     Q_OBJECT
     Q_PROPERTY(QUuid nodeId READ nodeId CONSTANT)
@@ -63,11 +70,15 @@ public:
     virtual QJsonObject toJson() const;
     virtual void fromJson(const QJsonObject& obj);
 
+    bool dirtyFlag() const;
+
 signals:
     void modified(const QString& nodeId);
+    void nodeEvent(const QString& nodeId, NodeEventType eventType);
 
 protected:
     void markDirty();
+    void emitNodeEvent(NodeEventType eventType);
 
     QUuid nodeId_;
     QString nodeType_;

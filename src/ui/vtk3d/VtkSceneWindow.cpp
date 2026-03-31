@@ -72,6 +72,9 @@ VtkSceneWindow::VtkSceneWindow(const QString& windowId, QWidget* parent)
     cameraResetTimer_.setSingleShot(true);
     cameraResetTimer_.setInterval(CAMERA_RESET_DELAY_MS);
     connect(&cameraResetTimer_, &QTimer::timeout, this, &VtkSceneWindow::resetCamera);
+
+    // Apply default camera parameters
+    applyCameraParameters(initialCameraParams_);
 }
 
 QString VtkSceneWindow::windowId() const { return windowId_; }
@@ -138,6 +141,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
     if (!actor || !node) return;
 
     if (auto* pt = qobject_cast<PointNode*>(node)) {
+        // Use first point for simple rendering (multi-point rendering can be extended)
         auto sphere = vtkSmartPointer<vtkSphereSource>::New();
         sphere->SetCenter(pt->position().x(), pt->position().y(), pt->position().z());
         sphere->SetRadius(pt->radius());
@@ -152,6 +156,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetOpacity(pt->getOpacity());
         actor->SetVisibility(pt->isVisible());
     } else if (auto* ln = qobject_cast<LineNode*>(node)) {
+        // Handle polyline: use first and last vertex for simple two-point rendering
         auto line = vtkSmartPointer<vtkLineSource>::New();
         line->SetPoint1(ln->startPoint().x(), ln->startPoint().y(), ln->startPoint().z());
         line->SetPoint2(ln->endPoint().x(), ln->endPoint().y(), ln->endPoint().z());
@@ -165,7 +170,7 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetOpacity(ln->getOpacity());
         actor->SetVisibility(ln->isVisible());
     } else if (auto* mdl = qobject_cast<ModelNode*>(node)) {
-        // Placeholder: create a unit cube actor when no file is loaded
+        // Placeholder: create a sphere actor when no real mesh is loaded
         auto sphere = vtkSmartPointer<vtkSphereSource>::New();
         sphere->SetRadius(5.0);
         sphere->Update();
@@ -176,17 +181,54 @@ void VtkSceneWindow::updateActorFromNode(vtkActor* actor, NodeBase* node) {
         actor->GetProperty()->SetColor(c.redF(), c.greenF(), c.blueF());
         actor->GetProperty()->SetOpacity(mdl->getOpacity());
         actor->SetVisibility(mdl->isVisible());
-        actor->GetProperty()->SetRepresentationToWireframe();
+        // Render mode
         if (mdl->renderMode() == RENDER_MODE_POINTS) {
             actor->GetProperty()->SetRepresentationToPoints();
-        } else if (mdl->renderMode() != RENDER_MODE_WIREFRAME) {
+        } else if (mdl->renderMode() == RENDER_MODE_WIREFRAME) {
+            actor->GetProperty()->SetRepresentationToWireframe();
+        } else {
             actor->GetProperty()->SetRepresentationToSurface();
         }
+        // Edge display
+        actor->GetProperty()->SetEdgeVisibility(mdl->isShowEdges());
+        if (mdl->isShowEdges()) {
+            QColor ec = mdl->getEdgeColor();
+            actor->GetProperty()->SetEdgeColor(ec.redF(), ec.greenF(), ec.blueF());
+            actor->GetProperty()->SetLineWidth(static_cast<float>(mdl->getEdgeWidth()));
+        }
+        // Backface culling
+        actor->GetProperty()->SetBackfaceCulling(mdl->isBackfaceCulling());
+    }
+}
+
+void VtkSceneWindow::setInitialCameraParameters(const CameraParameters& params) {
+    initialCameraParams_ = params;
+    applyCameraParameters(params);
+    renderWindow()->Render();
+}
+
+CameraParameters VtkSceneWindow::initialCameraParameters() const {
+    return initialCameraParams_;
+}
+
+void VtkSceneWindow::applyCameraParameters(const CameraParameters& params) {
+    if (!sharedCamera_) return;
+    sharedCamera_->SetPosition(params.position);
+    sharedCamera_->SetFocalPoint(params.focalPoint);
+    sharedCamera_->SetViewUp(params.viewUp);
+    sharedCamera_->SetClippingRange(params.clippingRange);
+    if (params.parallelProjection) {
+        sharedCamera_->ParallelProjectionOn();
+        sharedCamera_->SetParallelScale(params.parallelScale);
+    } else {
+        sharedCamera_->ParallelProjectionOff();
+        sharedCamera_->SetViewAngle(params.viewAngle);
     }
 }
 
 void VtkSceneWindow::resetCamera() {
-    modelRenderer_->ResetCamera();
+    // Restore to initial camera parameters (design section 13.2 UI constraint 5)
+    applyCameraParameters(initialCameraParams_);
     renderWindow()->Render();
 }
 

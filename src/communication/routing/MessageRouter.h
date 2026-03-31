@@ -14,8 +14,16 @@ public:
     void registerRoute(const QString& channelPattern, QObject* receiver, const char* slot);
     void unregisterRoutes(QObject* receiver);
 
+    static bool validateEnvelope(const QJsonObject& envelope, QString* errorOut = nullptr);
+    static QJsonObject wrapEnvelope(const QString& msgType,
+                                     const QJsonObject& body,
+                                     const QString& source = "desktop-client",
+                                     const QString& target = "logic-runtime",
+                                     bool needAck = false);
+
 signals:
     void unroutedMessage(const QString& channel, const QJsonObject& message);
+    void envelopeValidationFailed(const QString& channel, const QString& error);
 
 private:
     void cleanupStaleRoutes();

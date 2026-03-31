@@ -46,7 +46,7 @@ void NodeBase::addReference(const QString& relation, const QString& nodeId) {
     auto& refs = referenceMap_[relation];
     if (!refs.contains(nodeId)) {
         refs.append(nodeId);
-        markDirty();
+        emitNodeEvent(NodeEventType::ReferenceChanged);
     }
 }
 
@@ -56,7 +56,7 @@ void NodeBase::removeReference(const QString& relation, const QString& nodeId) {
     if (referenceMap_[relation].isEmpty()) {
         referenceMap_.remove(relation);
     }
-    markDirty();
+    emitNodeEvent(NodeEventType::ReferenceChanged);
 }
 
 QStringList NodeBase::getReferences(const QString& relation) const {
@@ -120,6 +120,7 @@ void NodeBase::endBatchModify() {
     if (modifyDepth_ == 0 && dirty_) {
         dirty_ = false;
         emit modified(nodeId_.toString());
+        emit nodeEvent(nodeId_.toString(), NodeEventType::NodeModified);
     }
 }
 
@@ -132,7 +133,21 @@ void NodeBase::markDirty() {
         dirty_ = true;
     } else {
         emit modified(nodeId_.toString());
+        emit nodeEvent(nodeId_.toString(), NodeEventType::NodeModified);
     }
+}
+
+void NodeBase::emitNodeEvent(NodeEventType eventType) {
+    if (modifyDepth_ > 0) {
+        dirty_ = true;
+    } else {
+        emit modified(nodeId_.toString());
+        emit nodeEvent(nodeId_.toString(), eventType);
+    }
+}
+
+bool NodeBase::dirtyFlag() const {
+    return dirty_;
 }
 
 QJsonObject NodeBase::toJson() const {
