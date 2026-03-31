@@ -4,6 +4,10 @@
 
 BaseSoftwareInitializer::BaseSoftwareInitializer(QObject* parent) : QObject(parent) {}
 
+QStringList BaseSoftwareInitializer::enabledModules() const {
+    return workflowSequence();
+}
+
 QSharedPointer<LogicRuntime> BaseSoftwareInitializer::logicRuntime() const {
     return logicRuntime_;
 }

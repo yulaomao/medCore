@@ -36,6 +36,9 @@ private slots:
     void onHandlerNotification(const LogicNotification& notification);
 
 private:
+    void emitWorkflowBlocked(const UiAction& action, const QString& targetModule, const QString& reason);
+    QString targetModuleForAction(const UiAction& action) const;
+
     ModuleLogicRegistry* registry_;
     WorkflowStateMachine* workflow_;
     SceneGraph* sceneGraph_;

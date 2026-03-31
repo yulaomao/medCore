@@ -61,6 +61,17 @@ void ApplicationCoordinator::connectShellSignals(MainWindow* mainWindow) {
     });
 }
 
+void ApplicationCoordinator::requestModuleActivation(const QString& moduleName) {
+    if (!gateway_ || moduleName.isEmpty()) return;
+
+    QJsonObject payload;
+    payload["targetModule"] = moduleName;
+    payload["sourceModule"] = activeModule_;
+    gateway_->sendAction(UiAction::create(ActionType::RequestSwitchModule,
+                                          moduleName,
+                                          payload));
+}
+
 void ApplicationCoordinator::onNotification(const LogicNotification& notification) {
     if (notification.targetScope == TargetScope::AllModules) {
         for (auto& coord : coordinators_)

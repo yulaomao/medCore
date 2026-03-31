@@ -80,8 +80,44 @@ void LogicRuntime::requestResync() {
 }
 
 void LogicRuntime::processAction(const UiAction& action) {
-    if (action.actionType == ActionType::NavigateToModule) {
-        workflow_->advance(action.module);
+    if (!workflow_) return;
+
+    const QString targetModule = targetModuleForAction(action);
+
+    if (action.actionType == ActionType::NextStep) {
+        const QStringList sequence = workflow_->workflowSequence();
+        const int currentIndex = sequence.indexOf(workflow_->currentModule());
+        if (currentIndex >= 0 && currentIndex + 1 < sequence.size()) {
+            const QString nextModule = sequence.at(currentIndex + 1);
+            if (!workflow_->advance(nextModule)) {
+                emitWorkflowBlocked(action, nextModule, QStringLiteral("next_step_blocked"));
+            }
+        }
+        return;
+    }
+
+    if (action.actionType == ActionType::PreviousStep) {
+        const QStringList sequence = workflow_->workflowSequence();
+        const int currentIndex = sequence.indexOf(workflow_->currentModule());
+        if (currentIndex > 0) {
+            const QString previousModule = sequence.at(currentIndex - 1);
+            if (!workflow_->advance(previousModule)) {
+                emitWorkflowBlocked(action, previousModule, QStringLiteral("previous_step_blocked"));
+            }
+        }
+        return;
+    }
+
+    if (action.actionType == ActionType::NavigateToModule ||
+        action.actionType == ActionType::RequestSwitchModule) {
+        if (targetModule.isEmpty()) {
+            emitWorkflowBlocked(action, targetModule, QStringLiteral("target_module_missing"));
+            return;
+        }
+        if (!workflow_->advance(targetModule)) {
+            emitWorkflowBlocked(action, targetModule, QStringLiteral("module_not_enterable"));
+        }
+        return;
     }
 
     auto handler = registry_->getHandler(action.module);
@@ -91,6 +127,15 @@ void LogicRuntime::processAction(const UiAction& action) {
 }
 
 void LogicRuntime::onStateSample(const QString& channel, const QJsonObject& data) {
+    const QString moduleName = channel.section('.', 0, 0);
+    if (!moduleName.isEmpty()) {
+        auto targetedHandler = registry_->getHandler(moduleName);
+        if (targetedHandler) {
+            targetedHandler->onStateSample(channel, data);
+            return;
+        }
+    }
+
     for (const auto& handler : registry_->allHandlers()) {
         handler->onStateSample(channel, data);
     }
@@ -98,4 +143,27 @@ void LogicRuntime::onStateSample(const QString& channel, const QJsonObject& data
 
 void LogicRuntime::onHandlerNotification(const LogicNotification& notification) {
     emit notificationReceived(notification);
+}
+
+void LogicRuntime::emitWorkflowBlocked(const UiAction& action,
+                                       const QString& targetModule,
+                                       const QString& reason)
+{
+    QJsonObject payload;
+    payload["requestedModule"] = targetModule;
+    payload["reason"] = reason;
+    payload["currentModule"] = workflow_ ? workflow_->currentModule() : QString();
+    emit notificationReceived(
+        LogicNotification::create(EventType::ModuleError,
+                                  NotificationLevel::Error,
+                                  payload,
+                                  TargetScope::Shell,
+                                  {},
+                                  action.actionId));
+}
+
+QString LogicRuntime::targetModuleForAction(const UiAction& action) const {
+    const QString payloadTarget = action.payload["targetModule"].toString();
+    if (!payloadTarget.isEmpty()) return payloadTarget;
+    return action.module;
 }

@@ -13,12 +13,21 @@ public:
     explicit DefaultSoftwareInitializer(QObject* parent = nullptr)
         : BaseSoftwareInitializer(parent) {}
 
+    QStringList workflowSequence() const override {
+        return {"params", "pointpick", "planning", "navigation"};
+    }
+
+    QString initialModule() const override {
+        return "params";
+    }
+
     void initialize() override {
         try {
             auto* registry  = new ModuleLogicRegistry();
             auto* sceneGraph = new SceneGraph();
             auto* workflow   = new WorkflowStateMachine(
-                {"params", "pointpick", "planning", "navigation"}, "params");
+                workflowSequence(), initialModule());
+            workflow->setEnterableModules(enabledModules());
             logicRuntime_    = QSharedPointer<LogicRuntime>::create(registry, workflow, sceneGraph);
             communicationHub_ = QSharedPointer<CommunicationHub>::create();
             communicationHub_->setLogicRuntime(logicRuntime_.data());
@@ -41,6 +50,10 @@ class ParamsOnlySoftwareInitializer : public DefaultSoftwareInitializer {
 public:
     explicit ParamsOnlySoftwareInitializer(QObject* parent = nullptr)
         : DefaultSoftwareInitializer(parent) {}
+
+    QStringList workflowSequence() const override {
+        return {"params"};
+    }
 };
 
 // full variant
@@ -49,6 +62,10 @@ class FullSoftwareInitializer : public DefaultSoftwareInitializer {
 public:
     explicit FullSoftwareInitializer(QObject* parent = nullptr)
         : DefaultSoftwareInitializer(parent) {}
+
+    QStringList workflowSequence() const override {
+        return {"params", "pointpick", "planning", "navigation"};
+    }
 };
 
 QSharedPointer<BaseSoftwareInitializer> SoftwareInitializerFactory::create(const QString& softwareType) {

@@ -20,6 +20,7 @@ public:
     void registerModuleCoordinator(QSharedPointer<ModuleCoordinator> coordinator);
     void activateModule(const QString& moduleName);
     void connectShellSignals(MainWindow* mainWindow);
+    void requestModuleActivation(const QString& moduleName);
 
 signals:
     void moduleActivated(const QString& moduleName);
