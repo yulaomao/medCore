@@ -2,12 +2,41 @@
 // 本头文件用于描述对应模块的类型声明、函数接口和关键成员变量语义。
 
 #pragma once
+#include <QList>
 #include <QObject>
 #include <QSharedPointer>
 #include <QStringList>
 
+class QApplication;
+class ApplicationCoordinator;
+class GlobalUiManager;
 class LogicRuntime;
+class MainWindow;
+class MessageRouter;
+class ModuleCoordinator;
+class ModuleLogicRegistry;
+class SceneGraph;
 class CommunicationHub;
+class VtkSceneWindow;
+
+struct SceneWindowRegistration {
+    QString windowId;
+    VtkSceneWindow* window{nullptr};
+};
+
+struct ModuleUiRegistration {
+    QSharedPointer<ModuleCoordinator> coordinator;
+    QList<SceneWindowRegistration> sceneWindows;
+};
+
+struct SoftwareBootstrapResult {
+    MainWindow* mainWindow{nullptr};
+    ApplicationCoordinator* appCoordinator{nullptr};
+    QSharedPointer<LogicRuntime> logicRuntime;
+    QSharedPointer<CommunicationHub> communicationHub;
+
+    bool isValid() const;
+};
 
 /// 软件初始化基类。
 ///
@@ -19,8 +48,8 @@ public:
     explicit BaseSoftwareInitializer(QObject* parent = nullptr);
     ~BaseSoftwareInitializer() override = default;
 
-    virtual void initialize() = 0;
-    virtual void shutdown()   = 0;
+    SoftwareBootstrapResult build(QApplication& application);
+    void shutdown();
     virtual QStringList workflowSequence() const = 0;
     virtual QString initialModule() const = 0;
     virtual QStringList enabledModules() const;
@@ -35,6 +64,15 @@ signals:
     void shutdownComplete();
 
 protected:
+    virtual void registerModuleHandlers(const QStringList& enabledModules,
+                                        ModuleLogicRegistry* registry,
+                                        SceneGraph* sceneGraph) = 0;
+    virtual QList<ModuleUiRegistration> createModuleUiRegistrations(const QStringList& enabledModules,
+                                                                    QObject* parent) = 0;
+    virtual void configureCommunication(MessageRouter* messageRouter,
+                                        CommunicationHub* communicationHub,
+                                        QObject* parent);
+
     QSharedPointer<LogicRuntime>     logicRuntime_;      // 逻辑运行时实例。
     QSharedPointer<CommunicationHub> communicationHub_;  // 通信枢纽实例。
 };

@@ -3,10 +3,16 @@
 
 #include "SoftwareInitializerFactory.h"
 #include "../../logic/registry/ModuleLogicRegistry.h"
-#include "../../logic/workflow/WorkflowStateMachine.h"
 #include "../../logic/scene/SceneGraph.h"
-#include "../../logic/runtime/LogicRuntime.h"
-#include "../../communication/hub/CommunicationHub.h"
+#include "../../modules/navigation/NavigationModuleCoordinator.h"
+#include "../../modules/navigation/NavigationModuleHandler.h"
+#include "../../modules/params/ParamsModuleCoordinator.h"
+#include "../../modules/params/ParamsModuleHandler.h"
+#include "../../modules/planning/PlanningModuleCoordinator.h"
+#include "../../modules/planning/PlanningModuleHandler.h"
+#include "../../modules/pointpick/PointPickModuleCoordinator.h"
+#include "../../modules/pointpick/PointPickModuleHandler.h"
+#include "../../ui/vtk3d/VtkSceneWindow.h"
 #include <QDebug>
 
 // 具体初始化器实现
@@ -24,26 +30,56 @@ public:
         return "params";
     }
 
-    void initialize() override {
-        try {
-            auto* registry  = new ModuleLogicRegistry();
-            auto* sceneGraph = new SceneGraph();
-            auto* workflow   = new WorkflowStateMachine(
-                workflowSequence(), initialModule());
-            workflow->setEnterableModules(enabledModules());
-            logicRuntime_    = QSharedPointer<LogicRuntime>::create(registry, workflow, sceneGraph);
-            communicationHub_ = QSharedPointer<CommunicationHub>::create();
-            communicationHub_->setLogicRuntime(logicRuntime_.data());
-            emit initializationComplete();
-        } catch (const std::exception& e) {
-            emit initializationFailed(QString::fromStdString(e.what()));
-        }
+    void registerModuleHandlers(const QStringList& enabledModules,
+                                ModuleLogicRegistry* registry,
+                                SceneGraph* sceneGraph) override {
+        if (!registry || !sceneGraph) return;
+
+        if (enabledModules.contains("params"))
+            registry->registerHandler(QSharedPointer<ParamsModuleHandler>::create(sceneGraph));
+        if (enabledModules.contains("pointpick"))
+            registry->registerHandler(QSharedPointer<PointPickModuleHandler>::create(sceneGraph));
+        if (enabledModules.contains("planning"))
+            registry->registerHandler(QSharedPointer<PlanningModuleHandler>::create(sceneGraph));
+        if (enabledModules.contains("navigation"))
+            registry->registerHandler(QSharedPointer<NavigationModuleHandler>::create(sceneGraph));
     }
 
-    void shutdown() override {
-        if (logicRuntime_)     logicRuntime_->stop();
-        if (communicationHub_) communicationHub_->stop();
-        emit shutdownComplete();
+    QList<ModuleUiRegistration> createModuleUiRegistrations(const QStringList& enabledModules,
+                                                            QObject* parent) override {
+        QList<ModuleUiRegistration> registrations;
+
+        if (enabledModules.contains("params")) {
+            ModuleUiRegistration registration;
+            registration.coordinator = QSharedPointer<ParamsModuleCoordinator>::create(parent);
+            registrations.append(registration);
+        }
+
+        if (enabledModules.contains("pointpick")) {
+            auto* window = new VtkSceneWindow("pointpick-window");
+            ModuleUiRegistration registration;
+            registration.coordinator = QSharedPointer<PointPickModuleCoordinator>::create(window, parent);
+            registration.sceneWindows.append({QStringLiteral("pointpick-window"), window});
+            registrations.append(registration);
+        }
+
+        if (enabledModules.contains("planning")) {
+            auto* window = new VtkSceneWindow("planning-window");
+            ModuleUiRegistration registration;
+            registration.coordinator = QSharedPointer<PlanningModuleCoordinator>::create(window, parent);
+            registration.sceneWindows.append({QStringLiteral("planning-window"), window});
+            registrations.append(registration);
+        }
+
+        if (enabledModules.contains("navigation")) {
+            auto* window = new VtkSceneWindow("navigation-window");
+            ModuleUiRegistration registration;
+            registration.coordinator = QSharedPointer<NavigationModuleCoordinator>::create(window, parent);
+            registration.sceneWindows.append({QStringLiteral("navigation-window"), window});
+            registrations.append(registration);
+        }
+
+        return registrations;
     }
 };
 
