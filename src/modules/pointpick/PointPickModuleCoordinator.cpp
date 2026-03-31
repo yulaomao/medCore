@@ -36,6 +36,10 @@ void PointPickModuleCoordinator::buildUi() {
 
     if (sceneWindow_) layout->addWidget(sceneWindow_);
 
+    summaryLabel_ = new QLabel("点位数量：0");
+    summaryLabel_->setMinimumWidth(220);
+    setAttachmentWidget(AttachmentSlot::Right, summaryLabel_);
+
     connect(addBtn,   &QPushButton::clicked, this, &PointPickModuleCoordinator::onAddPointClicked);
     connect(clearBtn, &QPushButton::clicked, this, &PointPickModuleCoordinator::onClearPointsClicked);
 }
@@ -71,4 +75,6 @@ void PointPickModuleCoordinator::onModuleNotification(const LogicNotification& n
     pointList_->clear();
     for (int i = 0; i < count; ++i)
         pointList_->addItem(QString("Point %1").arg(i + 1));
+    if (summaryLabel_)
+        summaryLabel_->setText(QString("点位数量：%1").arg(count));
 }

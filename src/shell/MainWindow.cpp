@@ -15,6 +15,10 @@ MainWindow::MainWindow(WorkspaceShell* workspaceShell, QWidget* parent)
     setupMenuBar();
 }
 
+WorkspaceShell* MainWindow::workspaceShell() const {
+    return workspaceShell_;
+}
+
 void MainWindow::setupMenuBar() {
     QMenu* fileMenu = menuBar()->addMenu("&File");
 

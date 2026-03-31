@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QSharedPointer>
+#include <QStringList>
 
 class LogicRuntime;
 class CommunicationHub;
@@ -13,6 +14,9 @@ public:
 
     virtual void initialize() = 0;
     virtual void shutdown()   = 0;
+    virtual QStringList workflowSequence() const = 0;
+    virtual QString initialModule() const = 0;
+    virtual QStringList enabledModules() const;
 
     QSharedPointer<LogicRuntime>      logicRuntime()      const;
     QSharedPointer<CommunicationHub>  communicationHub()  const;

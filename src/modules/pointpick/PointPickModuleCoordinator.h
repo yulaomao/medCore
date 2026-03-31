@@ -1,6 +1,7 @@
 #pragma once
 #include "../../ui/coordination/ModuleCoordinator.h"
 #include "../../ui/vtk3d/VtkSceneWindow.h"
+#include <QLabel>
 #include <QListWidget>
 
 class PointPickModuleCoordinator : public ModuleCoordinator {
@@ -22,6 +23,7 @@ private:
     void buildUi();
 
     QWidget* page_{nullptr};
+    QLabel* summaryLabel_{nullptr};
     QListWidget* pointList_{nullptr};
     VtkSceneWindow* sceneWindow_;
 };

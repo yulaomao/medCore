@@ -7,11 +7,20 @@
 
 enum class ActionType {
     Unknown,
-    NavigateToModule,
-    TriggerWorkflow,
+    NextStep,
+    PreviousStep,
+    RequestSwitchModule,
+    ConfirmPoints,
+    CancelSelection,
+    StartNavigation,
+    StopNavigation,
+    LoadModel,
+    RemoveModel,
     UserInput,
     SyncRequest,
-    Shutdown
+    Shutdown,
+    TriggerWorkflow,
+    NavigateToModule = RequestSwitchModule
 };
 
 struct UiAction {

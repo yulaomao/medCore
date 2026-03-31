@@ -19,7 +19,8 @@ void ParamsModuleHandler::onAction(const UiAction& action) {
     QJsonObject notifPayload;
     notifPayload["params"] = currentParams_;
     emitNotification(EventType::StateChanged, NotificationLevel::Info,
-                     notifPayload, action.actionId);
+                     notifPayload, TargetScope::CurrentModule,
+                     action.actionId);
 }
 
 void ParamsModuleHandler::onStateSample(const QString& channel, const QJsonObject& data) {
@@ -30,5 +31,6 @@ void ParamsModuleHandler::onStateSample(const QString& channel, const QJsonObjec
     QJsonObject notifPayload;
     notifPayload["params"] = currentParams_;
     notifPayload["channel"] = channel;
-    emitNotification(EventType::DataArrived, NotificationLevel::Info, notifPayload);
+    emitNotification(EventType::DataArrived, NotificationLevel::Info,
+                     notifPayload, TargetScope::CurrentModule);
 }

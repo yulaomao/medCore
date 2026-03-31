@@ -20,6 +20,7 @@
 #include "../shell/WorkspaceShell.h"
 #include "../shell/MainWindow.h"
 #include "../app/software/RedisSoftwareResolver.h"
+#include "../app/software/SoftwareInitializerFactory.h"
 #include "../modules/params/ParamsModuleHandler.h"
 #include "../modules/params/ParamsModuleCoordinator.h"
 #include "../modules/pointpick/PointPickModuleHandler.h"
@@ -29,6 +30,7 @@
 #include "../modules/navigation/NavigationModuleHandler.h"
 #include "../modules/navigation/NavigationModuleCoordinator.h"
 #include <QStackedWidget>
+#include <QPointer>
 
 int main(int argc, char* argv[]) {
     // Required for VTK + Qt OpenGL
@@ -47,30 +49,39 @@ int main(int argc, char* argv[]) {
     RedisSoftwareResolver resolver;
     QString softwareType = resolver.resolve("medcore.config");
 
-    // 2. Build core infrastructure
-    auto* sceneGraph = new SceneGraph();
+    auto softwareInitializer = SoftwareInitializerFactory::create(softwareType);
+    const QStringList workflow = softwareInitializer
+        ? softwareInitializer->workflowSequence()
+        : QStringList{"params", "pointpick", "planning", "navigation"};
+    const QStringList enabledModules = softwareInitializer
+        ? softwareInitializer->enabledModules()
+        : workflow;
+    const QString initialModule = softwareInitializer
+        ? softwareInitializer->initialModule()
+        : QStringLiteral("params");
 
-    QStringList workflow = {"params", "pointpick", "planning", "navigation"};
-    auto* workflowFSM = new WorkflowStateMachine(workflow, "params");
-    auto* registry    = new ModuleLogicRegistry();
+    // 2. Build core infrastructure
+    auto* sceneGraph = new SceneGraph(&app);
+    auto* workflowFSM = new WorkflowStateMachine(workflow, initialModule, &app);
+    workflowFSM->setEnterableModules(enabledModules);
+    auto* registry    = new ModuleLogicRegistry(&app);
 
     // 3. Register module logic handlers
-    auto paramsHandler    = QSharedPointer<ParamsModuleHandler>::create(sceneGraph);
-    auto pointPickHandler = QSharedPointer<PointPickModuleHandler>::create(sceneGraph);
-    auto planningHandler  = QSharedPointer<PlanningModuleHandler>::create(sceneGraph);
-    auto navHandler       = QSharedPointer<NavigationModuleHandler>::create(sceneGraph);
-
-    registry->registerHandler(paramsHandler);
-    registry->registerHandler(pointPickHandler);
-    registry->registerHandler(planningHandler);
-    registry->registerHandler(navHandler);
+    if (enabledModules.contains("params"))
+        registry->registerHandler(QSharedPointer<ParamsModuleHandler>::create(sceneGraph));
+    if (enabledModules.contains("pointpick"))
+        registry->registerHandler(QSharedPointer<PointPickModuleHandler>::create(sceneGraph));
+    if (enabledModules.contains("planning"))
+        registry->registerHandler(QSharedPointer<PlanningModuleHandler>::create(sceneGraph));
+    if (enabledModules.contains("navigation"))
+        registry->registerHandler(QSharedPointer<NavigationModuleHandler>::create(sceneGraph));
 
     // 4. Create and start LogicRuntime
     auto logicRuntime = QSharedPointer<LogicRuntime>::create(registry, workflowFSM, sceneGraph);
     logicRuntime->start();
 
     // 5. CommunicationHub
-    auto* messageRouter  = new MessageRouter();
+    auto* messageRouter  = new MessageRouter(&app);
     auto communicationHub = QSharedPointer<CommunicationHub>::create();
     communicationHub->setMessageRouter(messageRouter);
     communicationHub->setLogicRuntime(logicRuntime.data());
@@ -82,27 +93,34 @@ int main(int argc, char* argv[]) {
     auto* navWindow       = new VtkSceneWindow("navigation-window");
 
     // 7. Create module coordinators
-    auto paramsCoord    = QSharedPointer<ParamsModuleCoordinator>::create();
-    auto pointPickCoord = QSharedPointer<PointPickModuleCoordinator>::create(pointPickWindow);
-    auto planningCoord  = QSharedPointer<PlanningModuleCoordinator>::create(planningWindow);
-    auto navCoord       = QSharedPointer<NavigationModuleCoordinator>::create(navWindow);
+    auto paramsCoord    = enabledModules.contains("params")
+        ? QSharedPointer<ParamsModuleCoordinator>::create() : QSharedPointer<ParamsModuleCoordinator>();
+    auto pointPickCoord = enabledModules.contains("pointpick")
+        ? QSharedPointer<PointPickModuleCoordinator>::create(pointPickWindow) : QSharedPointer<PointPickModuleCoordinator>();
+    auto planningCoord  = enabledModules.contains("planning")
+        ? QSharedPointer<PlanningModuleCoordinator>::create(planningWindow) : QSharedPointer<PlanningModuleCoordinator>();
+    auto navCoord       = enabledModules.contains("navigation")
+        ? QSharedPointer<NavigationModuleCoordinator>::create(navWindow) : QSharedPointer<NavigationModuleCoordinator>();
 
     // 8. UI managers
     auto* stackedWidget = new QStackedWidget();
-    auto* pageManager   = new PageManager(stackedWidget);
-    auto* uiManager     = new GlobalUiManager();
+    auto* pageManager   = new PageManager(stackedWidget, &app);
+    auto* uiManager     = new GlobalUiManager(&app);
 
-    uiManager->register3dWindow("pointpick-window", pointPickWindow);
-    uiManager->register3dWindow("planning-window",  planningWindow);
-    uiManager->register3dWindow("navigation-window", navWindow);
+    if (enabledModules.contains("pointpick"))
+        uiManager->register3dWindow("pointpick-window", pointPickWindow);
+    if (enabledModules.contains("planning"))
+        uiManager->register3dWindow("planning-window", planningWindow);
+    if (enabledModules.contains("navigation"))
+        uiManager->register3dWindow("navigation-window", navWindow);
 
     // 9. ApplicationCoordinator
     auto* appCoordinator = new ApplicationCoordinator(logicRuntime.data(),
-                                                        pageManager, uiManager);
-    appCoordinator->registerModuleCoordinator(paramsCoord);
-    appCoordinator->registerModuleCoordinator(pointPickCoord);
-    appCoordinator->registerModuleCoordinator(planningCoord);
-    appCoordinator->registerModuleCoordinator(navCoord);
+                                                        pageManager, uiManager, &app);
+    if (paramsCoord) appCoordinator->registerModuleCoordinator(paramsCoord);
+    if (pointPickCoord) appCoordinator->registerModuleCoordinator(pointPickCoord);
+    if (planningCoord) appCoordinator->registerModuleCoordinator(planningCoord);
+    if (navCoord) appCoordinator->registerModuleCoordinator(navCoord);
 
     // 10. Wire LogicRuntime notifications -> ApplicationCoordinator
     logicRuntime->subscribeNotification(appCoordinator,
@@ -116,13 +134,21 @@ int main(int argc, char* argv[]) {
     for (const auto& mod : workflow) {
         auto* action = new QAction(mod, workspaceShell);
         QObject::connect(action, &QAction::triggered, [appCoordinator, mod]() {
-            appCoordinator->activateModule(mod);
+            appCoordinator->requestModuleActivation(mod);
         });
         workspaceShell->addToolbarAction(action);
     }
 
     auto* mainWindow = new MainWindow(workspaceShell);
     appCoordinator->connectShellSignals(mainWindow);
+
+    QPointer<CommunicationHub> communicationHubGuard(communicationHub.data());
+    QPointer<LogicRuntime> logicRuntimeGuard(logicRuntime.data());
+    QObject::connect(&app, &QCoreApplication::aboutToQuit,
+                     [communicationHubGuard, logicRuntimeGuard]() {
+        if (communicationHubGuard) communicationHubGuard->stop();
+        if (logicRuntimeGuard) logicRuntimeGuard->stop();
+    });
 
     // 12. Activate initial module
     appCoordinator->activateModule(workflowFSM->currentModule());

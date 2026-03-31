@@ -9,6 +9,9 @@ class PointNode : public NodeBase {
     Q_PROPERTY(QString label READ label WRITE setLabel)
     Q_PROPERTY(QColor color READ color WRITE setColor)
     Q_PROPERTY(double radius READ radius WRITE setRadius)
+    Q_PROPERTY(bool visibilityFlag READ isVisible WRITE setVisibility)
+    Q_PROPERTY(double opacityValue READ getOpacity WRITE setOpacity)
+    Q_PROPERTY(QString renderMode READ renderMode WRITE setRenderMode)
 
 public:
     explicit PointNode(QObject* parent = nullptr);
@@ -21,9 +24,16 @@ public:
 
     QColor color() const;
     void setColor(const QColor& color);
+    QColor getColor() const;
 
     double radius() const;
     void setRadius(double radius);
+    bool isVisible() const;
+    void setVisibility(bool visible);
+    double getOpacity() const;
+    void setOpacity(double opacity);
+    QString renderMode() const;
+    void setRenderMode(const QString& mode);
 
     QJsonObject toJson() const override;
     void fromJson(const QJsonObject& obj) override;
@@ -33,4 +43,7 @@ private:
     QString label_;
     QColor color_{Qt::yellow};
     double radius_{3.0};
+    bool visibilityFlag_{true};
+    double opacityValue_{1.0};
+    QString renderMode_{"points"};
 };

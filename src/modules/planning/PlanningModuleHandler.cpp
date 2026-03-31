@@ -24,7 +24,8 @@ void PlanningModuleHandler::onAction(const UiAction& action) {
 void PlanningModuleHandler::onStateSample(const QString& channel, const QJsonObject& data) {
     if (channel != "planning.state") return;
     QJsonObject notifPayload = data;
-    emitNotification(EventType::DataArrived, NotificationLevel::Info, notifPayload);
+    emitNotification(EventType::DataArrived, NotificationLevel::Info,
+                     notifPayload, TargetScope::CurrentModule);
 }
 
 void PlanningModuleHandler::loadModel(const QJsonObject& params, const QUuid& sourceActionId) {
@@ -40,7 +41,8 @@ void PlanningModuleHandler::loadModel(const QJsonObject& params, const QUuid& so
     QJsonObject payload;
     payload["modelId"] = id;
     payload["filePath"] = node->filePath();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }
 
 void PlanningModuleHandler::addLine(const QJsonObject& params, const QUuid& sourceActionId) {
@@ -60,7 +62,8 @@ void PlanningModuleHandler::addLine(const QJsonObject& params, const QUuid& sour
     QJsonObject payload;
     payload["lineId"] = id;
     payload["count"]  = managedLines_.size();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }
 
 void PlanningModuleHandler::removeLine(const QString& lineId, const QUuid& sourceActionId) {
@@ -70,5 +73,6 @@ void PlanningModuleHandler::removeLine(const QString& lineId, const QUuid& sourc
     QJsonObject payload;
     payload["lineId"] = lineId;
     payload["count"]  = managedLines_.size();
-    emitNotification(EventType::SceneUpdated, NotificationLevel::Info, payload, sourceActionId);
+    emitNotification(EventType::SceneUpdated, NotificationLevel::Info,
+                     payload, TargetScope::CurrentModule, sourceActionId);
 }

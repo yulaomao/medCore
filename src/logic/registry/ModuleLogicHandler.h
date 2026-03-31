@@ -20,5 +20,6 @@ signals:
 protected:
     void emitNotification(EventType evType, NotificationLevel lvl,
                           const QJsonObject& payload,
+                          TargetScope scope,
                           const QUuid& sourceActionId = {});
 };

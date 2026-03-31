@@ -17,4 +17,5 @@ public:
 
 signals:
     void notificationReceived(const LogicNotification& notification);
+    void connectionStateChanged(const QString& state);
 };

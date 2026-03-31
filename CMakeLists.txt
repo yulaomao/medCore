@@ -4,8 +4,9 @@ project(medCore VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Qt5
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets Network)
+# Qt5 / Qt6
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Network)
 
 # VTK
 find_package(VTK REQUIRED COMPONENTS
@@ -99,8 +100,8 @@ vtk_module_autoinit(
 )
 
 target_link_libraries(medCore PRIVATE
-    Qt5::Core
-    Qt5::Widgets
-    Qt5::Network
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network
     ${VTK_LIBRARIES}
 )
