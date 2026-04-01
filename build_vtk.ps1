@@ -3,7 +3,8 @@
 # Run this once, then medCore can use the pre-compiled VTK via find_package
 
 param(
-    [string]$Config = "Debug",
+    [ValidateSet("Debug", "Release", "RelWithDebInfo", "MinSizeRel")]
+    [string[]]$Configs = @("Debug", "Release"),
     [int]$Jobs = [Environment]::ProcessorCount
 )
 
@@ -13,6 +14,7 @@ $VtkSrcDir = Join-Path $ScriptDir "thirtyPart/vtk-src"
 $VtkBuildDir = Join-Path $ScriptDir "build/vtk-build"
 $VtkInstallDir = Join-Path $ScriptDir "thirtyPart/vtk"
 $Qt6Path = "C:/Qt/6.9.1/msvc2022_64"
+$Configs = @($Configs | Select-Object -Unique)
 
 function Test-Prerequisites {
     Write-Host "[VTK] Checking prerequisites..." -ForegroundColor Cyan
@@ -81,56 +83,75 @@ function Configure-VTK {
 }
 
 function Build-VTK {
-    Write-Host "[VTK] Building VTK (Config: $Config)..." -ForegroundColor Cyan
-    
-    Push-Location $VtkBuildDir
-    try {
-        cmake --build . --config $Config --parallel $Jobs
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "VTK build failed with exit code $LASTEXITCODE"
+    foreach ($config in $Configs) {
+        Write-Host "[VTK] Building VTK (Config: $config)..." -ForegroundColor Cyan
+
+        Push-Location $VtkBuildDir
+        try {
+            cmake --build . --config $config --parallel $Jobs
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "VTK build failed for config $config with exit code $LASTEXITCODE"
+            }
+        } finally {
+            Pop-Location
         }
-    } finally {
-        Pop-Location
     }
-    
+
     Write-Host "[VTK] Build complete" -ForegroundColor Green
 }
 
 function Install-VTK {
-    Write-Host "[VTK] Installing VTK to $VtkInstallDir..." -ForegroundColor Cyan
-    
-    Push-Location $VtkBuildDir
-    try {
-        cmake --install . --config $Config
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "VTK install failed with exit code $LASTEXITCODE"
+    foreach ($config in $Configs) {
+        Write-Host "[VTK] Installing VTK ($config) to $VtkInstallDir..." -ForegroundColor Cyan
+
+        Push-Location $VtkBuildDir
+        try {
+            cmake --install . --config $config
+
+            if ($LASTEXITCODE -ne 0) {
+                throw "VTK install failed for config $config with exit code $LASTEXITCODE"
+            }
+        } finally {
+            Pop-Location
         }
-    } finally {
-        Pop-Location
     }
-    
+
     Write-Host "[VTK] Installation complete" -ForegroundColor Green
 }
 
 function Verify-Installation {
     Write-Host "[VTK] Verifying installation..." -ForegroundColor Cyan
-    
-    $vtkConfigFile = Join-Path $VtkInstallDir "lib/cmake/vtk/VTKConfig.cmake"
-    if (Test-Path $vtkConfigFile) {
-        Write-Host "[VTK] VTK successfully installed at $VtkInstallDir" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host "[VTK] WARNING: VTKConfig.cmake not found at expected location" -ForegroundColor Yellow
+
+    $vtkConfigFile = Join-Path $VtkInstallDir "lib/cmake/vtk-9.4/vtk-config.cmake"
+    if (-not (Test-Path $vtkConfigFile)) {
+        Write-Host "[VTK] WARNING: vtk-config.cmake not found at expected location" -ForegroundColor Yellow
         return $false
     }
+
+    $missingConfigTargets = @()
+    foreach ($config in $Configs) {
+        $configSuffix = $config.ToLowerInvariant()
+        $targetsFile = Join-Path $VtkInstallDir "lib/cmake/vtk-9.4/VTK-targets-$configSuffix.cmake"
+        if (-not (Test-Path $targetsFile)) {
+            $missingConfigTargets += $targetsFile
+        }
+    }
+
+    if ($missingConfigTargets.Count -gt 0) {
+        Write-Host "[VTK] WARNING: missing configuration target files:" -ForegroundColor Yellow
+        $missingConfigTargets | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+        return $false
+    }
+
+    Write-Host "[VTK] VTK successfully installed at $VtkInstallDir" -ForegroundColor Green
+    return $true
 }
 
 # Main execution
 try {
     Write-Host "`n=== VTK Build Script ===" -ForegroundColor Cyan
-    Write-Host "Config: $Config" -ForegroundColor Gray
+    Write-Host "Configs: $($Configs -join ', ')" -ForegroundColor Gray
     Write-Host "Install Dir: $VtkInstallDir" -ForegroundColor Gray
     Write-Host ""
     
@@ -138,10 +159,12 @@ try {
     Configure-VTK
     Build-VTK
     Install-VTK
-    Verify-Installation
+    if (-not (Verify-Installation)) {
+        throw "VTK installation verification failed"
+    }
     
     Write-Host "`n[SUCCESS] VTK build and installation complete!`n" -ForegroundColor Green
-    Write-Host "Next steps:`n  1. Reconfigure medCore project (CMake configure)`n  2. Build medCore as normal`n" -ForegroundColor Cyan
+    Write-Host "Next steps:`n  1. Reconfigure medCore project (CMake configure)`n  2. Build medCore Debug or Release as needed`n" -ForegroundColor Cyan
     
 } catch {
     Write-Host "`n[ERROR] $($_.Exception.Message)`n" -ForegroundColor Red

@@ -36,10 +36,12 @@ cmake -G "Visual Studio 17 2022" -A x64 `
   -DVTK_MODULE_ENABLE_VTK_RenderingOpenGL2=YES `
   ../../thirtyPart/vtk-src
 
-# 3. 编译 VTK（Release）
-cmake --build . --config Release --parallel 4
+# 3. 编译并安装 Debug
+cmake --build . --config Debug --parallel 4
+cmake --install . --config Debug
 
-# 4. 安装 VTK
+# 4. 编译并安装 Release
+cmake --build . --config Release --parallel 4
 cmake --install . --config Release
 
 # 返回项目根目录
@@ -50,23 +52,26 @@ cd ../..
 
 1. 打开 Visual Studio
 2. 文件 → 打开 → CMake，选择 D:\code\C++\medCore\thirtyPart\vtk-src\CMakeLists.txt
-3. 配置后构建（选择 Release）
+3. 分别构建并安装 Debug 和 Release
 4. 生成后安装到 D:\code\C++\medCore\thirtyPart\vtk
 
 ### 方案 C：使用脚本（如遇权限问题）
 
-编辑 build_vtk.ps1 并修改权限：
+设置执行权限后运行：
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-.\build_vtk.ps1 -Config Release -Jobs 4
+.\build_vtk.ps1 -Jobs 4
 ```
 
 ## 验证安装
 
 编译完成后，检查以下路径是否存在：
 ```
-D:\code\C++\medCore\thirtyPart\vtk\lib\cmake\vtk\VTKConfig.cmake
-D:\code\C++\medCore\thirtyPart\vtk\bin\vtkGUISupportQt-9.4.dll（或 .so）
+D:\code\C++\medCore\thirtyPart\vtk\lib\cmake\vtk-9.4\vtk-config.cmake
+D:\code\C++\medCore\thirtyPart\vtk\lib\cmake\vtk-9.4\VTK-targets-debug.cmake
+D:\code\C++\medCore\thirtyPart\vtk\lib\cmake\vtk-9.4\VTK-targets-release.cmake
+D:\code\C++\medCore\thirtyPart\vtk\bin\vtkGUISupportQt-9.4d.dll
+D:\code\C++\medCore\thirtyPart\vtk\bin\vtkGUISupportQt-9.4.dll
 ```
 
 ## 后续编译 medCore
@@ -90,4 +95,10 @@ cmake --fresh -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
 **Q: DLL 缺失错误？**  
-A: 确保 VTK 安装步骤已完成，且 bin 目录中有 .dll 文件。
+A: 先确认 Debug 和 Release 都执行过 `cmake --install`，并且安装目录里同时存在 `VTK-targets-debug.cmake`、`VTK-targets-release.cmake` 以及对应的 `vtk...d.dll` / `vtk....dll`。
+
+**Q: Debug 运行时提示找不到 Qt6OpenGLWidgets.dll 或加载了错误版本 Qt DLL？**  
+A: 这通常是只安装了 Release 版 VTK。请重新执行 Debug 和 Release 两次安装，或者直接运行：
+```powershell
+.\build_vtk.ps1 -Jobs 4
+```

@@ -21,12 +21,19 @@
 ### 第一次（编译 VTK）
 ```powershell
 # 在项目根目录运行
-.\build_vtk.ps1 -Config Debug -Jobs 4
-# 或用 Release
-.\build_vtk.ps1 -Config Release -Jobs 4
+.\build_vtk.ps1 -Jobs 4
+# 默认会同时安装 Debug 和 Release
+# 如需只安装指定配置：
+.\build_vtk.ps1 -Configs Debug -Jobs 4
+.\build_vtk.ps1 -Configs Release -Jobs 4
 ```
 
-编译完成后 VTK 将安装到 `thirtyPart/vtk`
+编译完成后 VTK 将安装到 `thirtyPart/vtk`，并生成：
+
+- `lib/cmake/vtk-9.4/VTK-targets-debug.cmake`
+- `lib/cmake/vtk-9.4/VTK-targets-release.cmake`
+
+这样 medCore 的 Debug 与 Release 都会链接到匹配的 VTK 二进制。
 
 ### 后续（编译 medCore）
 照常在 VS 或 CMake 中编译 medCore，无需担心 VTK 源码变化

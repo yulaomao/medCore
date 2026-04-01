@@ -12,6 +12,7 @@
 #include "../contracts/LogicNotification.h"
 #include "../app/software/RedisSoftwareResolver.h"
 #include "../app/software/SoftwareInitializerFactory.h"
+#include "../shell/MainWindow.h"
 
 int main(int argc, char* argv[]) {
     // 为 VTK 与 Qt 的 OpenGL 集成设置默认渲染格式
